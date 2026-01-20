@@ -1,52 +1,63 @@
-// tailwind.config.js
-module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+/** @type {import('tailwindcss').Config} */
+export default {
   darkMode: "class",
+
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+
+  // 👇 FORCE TAILWIND TO BUILD THESE CLASSES
+  safelist: [
+    "bg-light-bg",
+    "bg-light-card",
+    "bg-light-section",
+    "text-light-body",
+    "text-light-text",
+
+    "dark:bg-dark-bg",
+    "dark:bg-dark-card",
+    "dark:text-dark-body",
+    "dark:text-dark-text",
+  ],
+
   theme: {
     extend: {
       colors: {
-        // Custom vibrant e-commerce palette
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9', // Main brand blue
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        gold: {
+          light: "#C9A24D",
+          hover: "#B8922E",
+          dark: "#D4AF37",
+          glow: "#E6C76A",
         },
-        secondary: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
+
+        light: {
+          bg: "#FAF8F5",
+          card: "#FFFFFF",
+          section: "#F1EFEA",
+          text: "#1C1C1C",
+          body: "#444444",
+          muted: "#7A7A7A",
         },
+
+        dark: {
+          bg: "#0F0F0F",
+          card: "#1A1A1A",
+          border: "#2A2A2A",
+          text: "#F5F5F5",
+          body: "#CFCFCF",
+          muted: "#9A9A9A",
+        },
+
         accent: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b', // Warm gold for CTAs
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
+          rose: "#E6B8B7",
+          roseDark: "#C98F8F",
+          emerald: "#1F6F54",
+          emeraldDark: "#2FA37C",
         },
-        success: {
-          500: '#10b981', // Emerald green for cart
-        }
-      }
+      },
     },
   },
+
   plugins: [],
-}
+};

@@ -1,36 +1,43 @@
-// src/pages/Products.jsx
-import { useState, useEffect } from 'react';
-import { FaHeart, FaShoppingCart, FaEye } from 'react-icons/fa';
+import { useState, useEffect } from "react";
+import {
+  FaHeart,
+  FaShoppingCart,
+  FaEye,
+  FaChevronLeft,
+  FaChevronRight,
+  FaFilter,
+  FaTimes
+} from "react-icons/fa";
+import { Link } from "react-router-dom";
+import Breadcrumb from "../components/shared/Breadcrumb";
 
 const Products = () => {
   const [darkMode, setDarkMode] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 1000]);
-  const [selectedSizes, setSelectedSizes] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [priceRange, setPriceRange] = useState(1000);
+  const [sortBy, setSortBy] = useState("featured");
   const [currentPage, setCurrentPage] = useState(1);
-  const productsPerPage = 9;
+  const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter state
 
-  // Detect system preference
+  const productsPerPage = 6;
+
   useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') === 'true' || 
-                  (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const isDark =
+      localStorage.getItem("darkMode") === "true" ||
+      (!("darkMode" in localStorage) &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDarkMode(isDark);
   }, []);
 
-  // Categories
   const categories = [
-    { id: 'all', name: 'All Products' },
-    { id: 'necklaces', name: 'Necklaces' },
-    { id: 'rings', name: 'Rings' },
-    { id: 'earrings', name: 'Earrings' },
-    { id: 'bracelets', name: 'Bracelets' }
+    { id: "all", name: "All Products" },
+    { id: "necklaces", name: "Necklaces" },
+    { id: "rings", name: "Rings" },
+    { id: "earrings", name: "Earrings" },
+    { id: "bracelets", name: "Bracelets" },
   ];
 
-  // Sizes
-  const sizes = ['XS', 'S', 'M', 'L', 'XL'];
-
-  // Product data (27 products for pagination)
-  const allProducts = [
+  const products = [
     { id: 1, name: "Diamond Stud Earrings", price: 199, image: "/images/16.jpg", category: "earrings" },
     { id: 2, name: "Solitaire Engagement Ring", price: 599, image: "/images/10.jpg", category: "rings" },
     { id: 3, name: "Pearl Pendant Necklace", price: 249, image: "/images/4.jpg", category: "necklaces" },
@@ -40,304 +47,154 @@ const Products = () => {
     { id: 7, name: "Sapphire Locket", price: 349, image: "/images/7.jpg", category: "necklaces" },
     { id: 8, name: "Tennis Bracelet", price: 449, image: "/images/23.jpg", category: "bracelets" },
     { id: 9, name: "Chandelier Earrings", price: 279, image: "/images/19.jpg", category: "earrings" },
-    { id: 10, name: "Diamond Halo Ring", price: 799, image: "/images/13.jpg", category: "rings" },
-    { id: 11, name: "Emerald Choker", price: 449, image: "/images/8.jpg", category: "necklaces" },
-    { id: 12, name: "Beaded Gold Bracelet", price: 159, image: "/images/24.jpg", category: "bracelets" },
-    { id: 13, name: "Minimalist Gold Earrings", price: 99, image: "/images/20.jpg", category: "earrings" },
-    { id: 14, name: "Rose Gold Twist Ring", price: 249, image: "/images/14.jpg", category: "rings" },
-    { id: 15, name: "Silver Filigree Necklace", price: 179, image: "/images/9.jpg", category: "necklaces" },
-    { id: 16, name: "Layered Chain Bracelet", price: 199, image: "/images/25.jpg", category: "bracelets" },
-    { id: 17, name: "Tassel Design Earrings", price: 159, image: "/images/21.jpg", category: "earrings" },
-    { id: 18, name: "Eternity Band Ring", price: 499, image: "/images/15.jpg", category: "rings" },
-    { id: 19, name: "Diamond Pendant Necklace", price: 299, image: "/images/5.jpg", category: "necklaces" },
-    { id: 20, name: "Cuff Bracelet", price: 229, image: "/images/26.jpg", category: "bracelets" },
-    { id: 21, name: "Pearl Drops Earrings", price: 149, image: "/images/17.jpg", category: "earrings" },
-    { id: 22, name: "Gemstone Cluster Ring", price: 399, image: "/images/12.jpg", category: "rings" },
-    { id: 23, name: "Locket Necklace", price: 199, image: "/images/6.jpg", category: "necklaces" },
-    { id: 24, name: "Bangle Set", price: 279, image: "/images/27.jpg", category: "bracelets" },
-    { id: 25, name: "Stud Earrings Set", price: 119, image: "/images/28.jpg", category: "earrings" },
-    { id: 26, name: "Wedding Band", price: 349, image: "/images/29.jpg", category: "rings" },
-    { id: 27, name: "Chain Necklace", price: 129, image: "/images/30.jpg", category: "necklaces" }
   ];
 
-  // Filter products
-  const filteredProducts = allProducts.filter(product => {
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
-    return matchesCategory && matchesPrice;
-  });
+  /* ---------------- FILTER + SORT ---------------- */
+  let filteredProducts = products.filter(
+    (p) =>
+      (selectedCategory === "all" || p.category === selectedCategory) &&
+      p.price <= priceRange
+  );
 
-  // Pagination
+  if (sortBy === "price-low") filteredProducts.sort((a, b) => a.price - b.price);
+  if (sortBy === "price-high") filteredProducts.sort((a, b) => b.price - a.price);
+  if (sortBy === "name") filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
   const startIndex = (currentPage - 1) * productsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
 
-  // Handle size filter toggle
-  const toggleSize = (size) => {
-    if (selectedSizes.includes(size)) {
-      setSelectedSizes(selectedSizes.filter(s => s !== size));
-    } else {
-      setSelectedSizes([...selectedSizes, size]);
-    }
-  };
+  const breadcrumbPaths = [{ name: "Home", href: "/" }, { name: "Products" }];
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-10 px-4 bg-light-bg dark:bg-dark-bg transition-colors min-h-screen relative">
       <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb */}
-        <div className="mb-8">
-          <nav className="flex" aria-label="Breadcrumb">
-            <ol className="flex items-center space-x-2">
-              <li>
-                <a href="/" className={`text-sm ${
-                  darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
-                } transition-colors`}>
-                  Home
-                </a>
-              </li>
-              <li>
-                <svg className={`w-4 h-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </li>
-              <li>
-                <span className={`text-sm font-medium ${
-                  darkMode ? 'text-white' : 'text-gray-900'
-                }`}>
-                  Products
-                </span>
-              </li>
-            </ol>
-          </nav>
+        <Breadcrumb paths={breadcrumbPaths} />
+
+        {/* TOP BAR */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6 mb-6">
+          <p className="text-sm text-light-body dark:text-dark-body font-medium">
+            Showing <span className="text-gold-light">{filteredProducts.length}</span> products
+          </p>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+             {/* Mobile Filter Button */}
+            <button 
+              onClick={() => setIsFilterOpen(true)}
+              className="lg:hidden flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gold-light text-white rounded-lg text-sm font-bold"
+            >
+              <FaFilter size={12} /> Filter
+            </button>
+
+            <select
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+              className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-none"
+            >
+              <option value="featured">Sort by: Featured</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="name">Name: A to Z</option>
+            </select>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <div className={`lg:w-1/4 rounded-xl p-6 ${
-            darkMode ? 'bg-gray-800' : 'bg-white'
-          } shadow-sm`}>
-            {/* Category Filter */}
-            <div className="mb-8">
-              <h3 className={`text-lg font-semibold mb-4 ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                Categories
-              </h3>
-              <ul className="space-y-2">
-                {categories.map((category) => (
-                  <li key={category.id}>
-                    <button
-                      onClick={() => setSelectedCategory(category.id)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        selectedCategory === category.id
-                          ? 'bg-accent-500 text-white'
-                          : darkMode 
-                            ? 'text-gray-300 hover:bg-gray-700' 
-                            : 'text-gray-700 hover:bg-gray-100'
+          
+          {/* MOBILE OVERLAY */}
+          {isFilterOpen && (
+            <div 
+              className="fixed inset-0 bg-black/50 z-[150] lg:hidden backdrop-blur-sm"
+              onClick={() => setIsFilterOpen(false)}
+            />
+          )}
+
+          {/* SIDEBAR (Responsive) */}
+          <aside className={`
+            fixed inset-y-0 left-0 z-[200] w-72 bg-light-card dark:bg-dark-card p-6 shadow-2xl transition-transform duration-300 transform
+            ${isFilterOpen ? "translate-x-0" : "-translate-x-full"}
+            lg:relative lg:translate-x-0 lg:w-1/4 lg:z-0 lg:shadow-sm lg:rounded-xl lg:border lg:border-light-section lg:dark:border-dark-border lg:block self-start
+          `}>
+            <div className="flex justify-between items-center mb-6 lg:mb-4">
+              <h3 className="font-bold text-lg text-light-text dark:text-dark-text">Categories</h3>
+              <button onClick={() => setIsFilterOpen(false)} className="lg:hidden text-light-body dark:text-dark-body">
+                <FaTimes size={20} />
+              </button>
+            </div>
+
+            <ul className="space-y-2">
+              {categories.map((cat) => (
+                <li key={cat.id}>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setCurrentPage(1);
+                      setIsFilterOpen(false); // Auto close on mobile
+                    }}
+                    className={`w-full px-4 py-2.5 text-left rounded-lg text-sm font-medium transition
+                      ${selectedCategory === cat.id
+                        ? "bg-gold-light text-white shadow-md"
+                        : "text-light-body dark:text-dark-body hover:bg-light-section dark:hover:bg-dark-border"
                       }`}
-                    >
-                      {category.name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Price Filter */}
-            <div className="mb-8">
-              <h3 className={`text-lg font-semibold mb-4 ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                Price Range
-              </h3>
-              <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span className={`text-sm ${
-                    darkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    ${priceRange[0]}
-                  </span>
-                  <span className={`text-sm ${
-                    darkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    ${priceRange[1]}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1000"
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                  className="w-full accent-accent-500"
-                />
-              </div>
-            </div>
-
-            {/* Size Filter */}
-            <div>
-              <h3 className={`text-lg font-semibold mb-4 ${
-                darkMode ? 'text-white' : 'text-gray-900'
-              }`}>
-                Size
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => toggleSize(size)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      selectedSizes.includes(size)
-                        ? 'bg-accent-500 text-white'
-                        : darkMode 
-                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
                   >
-                    {size}
+                    {cat.name}
                   </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Product Grid */}
-          <div className="lg:w-3/4">
-            {/* Product Count & Sorting */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-              <p className={`text-sm ${
-                darkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                Showing {currentProducts.length} of {filteredProducts.length} products
-              </p>
-              <div className="flex items-center space-x-4">
-                <label htmlFor="sort" className={`text-sm ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  Sort by:
-                </label>
-                <select 
-                  id="sort" 
-                  className={`px-3 py-1.5 rounded-lg text-sm ${
-                    darkMode 
-                      ? 'bg-gray-800 border-gray-700 text-white' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  } border focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none`}
-                >
-                  <option>Featured</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Newest</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {currentProducts.map((product) => (
-                <div 
-                  key={product.id}
-                  className="group relative"
-                >
-                  {/* Image Container */}
-                  <div className="relative h-64 overflow-hidden rounded-lg mb-3">
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/600x600/f1f5f9/64748b?text=Jewelry";
-                        e.target.className = "w-full h-full object-cover bg-gray-200 dark:bg-gray-800";
-                      }}
-                    />
-                    
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end pb-4 space-y-2">
-                      <div className="flex space-x-2">
-                        <button className="w-8 h-8 rounded-full bg-white/90 dark:bg-gray-900 flex items-center justify-center text-gray-700 dark:text-gray-300 shadow-md hover:bg-accent-500 hover:text-white transition-all">
-                          <FaHeart className="text-xs" />
-                        </button>
-                        <button className="w-8 h-8 rounded-full bg-white/90 dark:bg-gray-900 flex items-center justify-center text-gray-700 dark:text-gray-300 shadow-md hover:bg-accent-500 hover:text-white transition-all">
-                          <FaEye className="text-xs" />
-                        </button>
-                      </div>
-                      <button className="bg-accent-500 hover:bg-accent-600 text-white text-xs font-medium py-1.5 px-3 rounded-full transition-colors flex items-center">
-                        <FaShoppingCart className="mr-1 text-xs" /> Add to Cart
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Product Info */}
-                  <h3 className={`font-semibold text-sm mb-1 ${
-                    darkMode ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    {product.name}
-                  </h3>
-                  <p className={`font-bold text-sm ${
-                    darkMode ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    ${product.price}
-                  </p>
-                </div>
+                </li>
               ))}
+            </ul>
+
+            <div className="mt-8 pt-6 border-t border-light-section dark:border-dark-border">
+              <h3 className="font-semibold mb-4 text-light-text dark:text-dark-text">Max Price: <span className="text-gold-light">${priceRange}</span></h3>
+              <input
+                type="range"
+                min="0"
+                max="1000"
+                value={priceRange}
+                onChange={(e) => { setPriceRange(Number(e.target.value)); setCurrentPage(1); }}
+                className="w-full accent-gold-light h-1.5 bg-gray-200 dark:bg-dark-border rounded-lg appearance-none cursor-pointer"
+              />
             </div>
+          </aside>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-12">
-                <nav className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      currentPage === 1
-                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                        : darkMode 
-                          ? 'bg-gray-800 text-white hover:bg-gray-700' 
-                          : 'bg-white text-gray-900 hover:bg-gray-100'
-                    } transition-colors shadow-sm`}
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
+          {/* PRODUCTS GRID */}
+          <section className="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentProducts.map((product) => (
+              <div key={product.id} className="group bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border rounded-xl shadow-md overflow-hidden">
+                <div className="relative h-64 overflow-hidden bg-white">
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  
+                  {/* Hover Icons Overlay */}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gold-light hover:bg-gold-light hover:text-white transition-all shadow-lg"><FaEye /></button>
+                    <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gold-light hover:bg-gold-light hover:text-white transition-all shadow-lg"><FaHeart /></button>
+                  </div>
+                </div>
 
-                  {[...Array(totalPages)].map((_, index) => (
-                    <button
-                      key={index + 1}
-                      onClick={() => setCurrentPage(index + 1)}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        currentPage === index + 1
-                          ? 'bg-accent-500 text-white'
-                          : darkMode 
-                            ? 'bg-gray-800 text-white hover:bg-gray-700' 
-                            : 'bg-white text-gray-900 hover:bg-gray-100'
-                      } transition-colors shadow-sm`}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      currentPage === totalPages
-                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                        : darkMode 
-                          ? 'bg-gray-800 text-white hover:bg-gray-700' 
-                          : 'bg-white text-gray-900 hover:bg-gray-100'
-                    } transition-colors shadow-sm`}
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </nav>
+                <div className="p-4">
+                  <h3 className="font-semibold text-sm mb-1 text-light-text dark:text-dark-text">{product.name}</h3>
+                  <p className="font-bold text-gold-light mb-4">${product.price}</p>
+                  <div className="flex gap-2">
+                    <Link to={`/product/${product.id}`} className="flex-1 text-center text-[10px] font-bold uppercase py-2 border border-gold-light text-gold-light rounded hover:bg-gold-light hover:text-white transition">Details</Link>
+                    <button className="flex-1 text-[10px] font-bold uppercase py-2 bg-gold-light text-white rounded hover:bg-gold-hover transition">Add to Cart</button>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
+            ))}
+          </section>
         </div>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-12 mb-10">
+            <div className="flex items-center gap-1 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border p-1.5 rounded-full">
+              <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="w-9 h-9 flex items-center justify-center hover:bg-gold-light hover:text-white rounded-full transition disabled:opacity-30"><FaChevronLeft size={12}/></button>
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-9 h-9 rounded-full text-xs font-bold ${currentPage === i + 1 ? "bg-gold-light text-white" : "hover:bg-light-section dark:hover:bg-dark-border"}`}>{i + 1}</button>
+              ))}
+              <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="w-9 h-9 flex items-center justify-center hover:bg-gold-light hover:text-white rounded-full transition disabled:opacity-30"><FaChevronRight size={12}/></button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

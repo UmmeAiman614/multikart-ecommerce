@@ -1,17 +1,5 @@
 // src/components/CategoryShowcase.jsx
-import { useState, useEffect } from 'react';
-
 const CategoryShowcase = () => {
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Detect system preference
-  useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') === 'true' || 
-                  (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setDarkMode(isDark);
-  }, []);
-
-  // Correct Jewelry Categories
   const categories = [
     {
       id: 'earrings',
@@ -48,63 +36,53 @@ const CategoryShowcase = () => {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8">
+    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-light-bg dark:bg-dark-bg transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-light-text dark:text-dark-text">
             Shop By Category
           </h2>
-          <p className={`max-w-2xl mx-auto text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className="max-w-2xl mx-auto text-lg text-light-muted dark:text-dark-muted">
             Discover our curated collections of fine jewelry
           </p>
         </div>
 
-        {/* 2x2 Grid - Simple White Cards */}
+        {/* 2x2 Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
           {categories.map((category) => (
             <div 
               key={category.id}
-              className={`relative overflow-hidden rounded-xl shadow-sm transition-all duration-300 hover:shadow-md ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              }`}
+              className="relative overflow-hidden rounded-xl shadow-sm transition-all duration-300 hover:shadow-md bg-light-card dark:bg-dark-card"
             >
               {/* Image Container */}
-              <div className="relative h-80 overflow-hidden">
+              <div className="relative h-80 overflow-hidden group">
                 <img 
                   src={category.image} 
                   alt={category.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {
                     e.target.src = "https://via.placeholder.com/600x600/f1f5f9/64748b?text=Jewelry+Collection";
-                    e.target.className = "w-full h-full object-cover bg-gray-200 dark:bg-gray-800";
+                    e.target.className = "w-full h-full object-cover bg-light-card dark:bg-dark-card";
                   }}
                 />
                 
-                {/* Text Overlay - Right side, bold colors */}
+                {/* Text Overlay */}
                 <div className="absolute top-6 right-6 max-w-[60%]">
                   <div className="mb-2">
-                    <span className={`text-xs font-bold uppercase tracking-wide ${
-                      darkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <span className="text-xs font-bold uppercase tracking-wide text-light-muted dark:text-dark-muted">
                       {category.categoryLabel}
                     </span>
                   </div>
-                  <h3 className={`text-xl md:text-2xl font-bold mb-2 ${
-                    darkMode ? 'text-white' : 'text-gray-900'
-                  }`}>
+                  <h3 className="text-xl md:text-2xl font-bold mb-2 text-light-text dark:text-light-text">
                     {category.name}
                   </h3>
-                  <p className={`text-sm mb-4 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-700'
-                  }`}>
+                  <p className="text-sm mb-4 text-light-body dark:text-light-text">
                     {category.description}
                   </p>
                   <a 
                     href={category.shopLink}
-                    className={`inline-flex items-center text-sm font-bold border-b-2 border-transparent hover:border-accent-500 ${
-                      darkMode ? 'text-white hover:text-accent-300' : 'text-gray-900 hover:text-accent-500'
-                    } transition-colors`}
+                    className="inline-flex items-center text-sm font-bold border-b-2 border-transparent text-light-text hover:text-gold-glow transition-colors"
                   >
                     Shop Now
                   </a>

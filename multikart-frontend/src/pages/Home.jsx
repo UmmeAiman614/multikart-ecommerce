@@ -1,5 +1,5 @@
 import HeroSection from "../components/home/HeroSection";
-import FeaturedCollections from "../components/home/FeaturedCollections.jsx";
+// import FeaturedCollections from "../components/home/FeaturedCollections.jsx";
 import CategorySlider from "../components/home/CategorySlider.jsx";
 import CategoryShowcase from "../components/home/CategoryShowcase.jsx";
 import FeaturedProductsSlider from "../components/home/FeaturedProductsSlider.jsx";
@@ -11,7 +11,7 @@ const Home = () => {
   return (
     <div>
       <HeroSection />
-      <FeaturedCollections />
+      {/* <FeaturedCollections /> */}
       <CategorySlider />
       <CategoryShowcase />
       <FeaturedProductsSlider />

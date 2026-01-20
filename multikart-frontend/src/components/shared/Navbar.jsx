@@ -1,152 +1,194 @@
-// src/components/Navbar.jsx
-import React from 'react';
-import { useState, useEffect } from 'react';
-import { FaShoppingCart, FaSearch, FaSun, FaMoon, FaBars, FaTimes } from 'react-icons/fa';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FaShoppingCart,
+  FaSearch,
+  FaSun,
+  FaMoon,
+  FaBars,
+  FaTimes,
+  FaHeart,
+  FaUser,
+} from "react-icons/fa";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [cartCount, setCartCount] = useState(3); // Mock cart count
+  const [cartCount] = useState(3);
+  const [wishlistCount] = useState(2);
+  const navigate = useNavigate();
 
-  // Detect system preference and set initial dark mode
   useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') === 'true' || 
-                  (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const isDark =
+      localStorage.getItem("darkMode") === "true" ||
+      (!("darkMode" in localStorage) &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDarkMode(isDark);
   }, []);
 
-  // Apply dark mode class to document
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
-  // Navigation links
   const navLinks = [
-    { name: 'Home', href: '#' },
-    { name: 'Products', href: '#' },
-    { name: 'Categories', href: '#' },
-    { name: 'Deals', href: '#' },
-    { name: 'About', href: '#' },
+    { name: "Home", href: "/" },
+    { name: "Shop", href: "/products" },
+    { name: "Categories", href: "/categories" },
+    { name: "About Us", href: "/about" },
+    { name: "Contact", href: "/contact" },
   ];
 
   return (
-    <header className="sticky top-0 z-50">
-      {/* Top bar with subtle gradient */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-gray-900 dark:to-gray-800 shadow-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <>
+      <header className="fixed top-0 z-[100] w-full">
+        <div className="bg-light-bg dark:bg-dark-bg border-b border-dark-border shadow-lg w-full">
+          <div className="flex items-center justify-between h-20 px-4 md:px-8">
             
             {/* LEFT: Logo */}
-            <div className="flex-shrink-0 flex items-center">
-              <div className="bg-white dark:bg-gray-700 p-2 rounded-xl shadow-md">
-                <FaShoppingCart className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+            <div className="flex items-center gap-2 md:gap-4 cursor-pointer flex-shrink-0" onClick={() => navigate("/")}>
+              <div className="bg-gold-light dark:bg-gold-dark p-2 md:p-3 rounded-xl md:rounded-2xl shadow-md">
+                <FaShoppingCart className="text-xl md:text-2xl text-black" />
               </div>
-              <span className="ml-3 text-xl font-bold text-white dark:text-primary-300 tracking-tight">
-                Shop<span className="text-accent-400">Vista</span>
+              <span className="text-xl md:text-2xl font-bold text-light-text dark:text-dark-text">
+                Jewel<span className="text-gold-light dark:text-gold-dark">Lux</span>
               </span>
             </div>
 
-            {/* CENTER: Desktop Navigation */}
-            <div className="hidden md:flex md:space-x-8">
+            {/* CENTER: Links (Desktop Only) */}
+            <nav className="hidden md:flex flex-grow justify-center gap-10">
               {navLinks.map((link) => (
-                <a
+                <button
                   key={link.name}
-                  href={link.href}
-                  className="text-white hover:text-accent-300 dark:hover:text-accent-400 px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 transform hover:-translate-y-0.5"
+                  onClick={() => navigate(link.href)}
+                  className="text-lg font-medium text-light-body dark:text-dark-body hover:text-gold-light dark:hover:text-gold-dark transition"
                 >
                   {link.name}
-                </a>
+                </button>
               ))}
-            </div>
+            </nav>
 
-            {/* RIGHT: Icons (Desktop) */}
-            <div className="hidden md:flex items-center space-x-4">
-              <button className="text-white hover:text-accent-300 dark:hover:text-accent-400 p-2 rounded-full hover:bg-white/10 transition">
-                <FaSearch className="h-5 w-5" />
-              </button>
+            {/* RIGHT: Action Icons (Visible on Mobile & Desktop) */}
+            <div className="flex items-center gap-3 md:gap-6">
               
-              <button className="relative text-white hover:text-success-300 dark:hover:text-success-400 p-2 rounded-full hover:bg-white/10 transition">
-                <FaShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-accent-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-              
+              {/* Search (Desktop Only to save mobile space) */}
+              <div className="hidden md:block">
+                <IconBtn onClick={() => navigate("/search")}>
+                  <FaSearch />
+                </IconBtn>
+              </div>
+
+              {/* Wishlist & Cart (Always Visible) */}
+              <BadgeIcon icon={<FaHeart />} count={wishlistCount} onClick={() => navigate("/wishlist")} />
+              <BadgeIcon icon={<FaShoppingCart />} count={cartCount} onClick={() => navigate("/viewcart")} />
+
+              {/* Dark Mode Toggle (Always Visible) */}
               <button 
-                onClick={toggleDarkMode}
-                className="text-white hover:text-accent-300 dark:hover:text-accent-400 p-2 rounded-full hover:bg-white/10 transition"
-                aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                onClick={() => setDarkMode(!darkMode)}
+                className="text-xl md:text-2xl text-light-body dark:text-dark-text hover:text-gold-light transition"
               >
-                {darkMode ? <FaSun className="h-5 w-5" /> : <FaMoon className="h-5 w-5" />}
+                {darkMode ? <FaSun /> : <FaMoon />}
               </button>
-            </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
+              {/* User Icon (Always Visible, Outside Hamburger) */}
+              <div className="relative group">
+                <button 
+                  onClick={() => navigate("/myaccount")}
+                  className="text-xl md:text-2xl text-light-body dark:text-dark-text hover:text-gold-light transition"
+                >
+                  <FaUser />
+                </button>
+                {/* Desktop Dropdown */}
+                <div className="hidden md:block absolute right-0 pt-4 w-44 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                  <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-xl overflow-hidden border border-light-section dark:border-dark-border">
+                    <DropItem onClick={() => navigate("/auth")} text="Login" />
+                    <DropItem onClick={() => navigate("/auth")} text="Register" />
+                    <DropItem onClick={() => navigate("/myaccount")} text="My Account" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Hamburger (Only visible on small screens) */}
               <button
-                onClick={toggleMenu}
-                className="text-white hover:text-accent-300 dark:hover:text-accent-400 p-2 rounded-md focus:outline-none"
-                aria-expanded="false"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden text-2xl text-gold-light hover:text-gold-dark focus:outline-none ml-1"
               >
-                {isMenuOpen ? (
-                  <FaTimes className="block h-6 w-6" />
-                ) : (
-                  <FaBars className="block h-6 w-6" />
-                )}
+                {isMenuOpen ? <FaTimes /> : <FaBars />}
               </button>
             </div>
           </div>
         </div>
 
-        {/* MOBILE MENU */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-primary-600 dark:bg-gray-800 border-t border-primary-700 dark:border-gray-700">
-            <div className="pt-2 pb-3 space-y-1 px-4">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-white hover:bg-primary-700 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium"
-                >
-                  {link.name}
-                </a>
-              ))}
-              
-              {/* Mobile action buttons */}
-              <div className="mt-4 pt-4 border-t border-primary-700 dark:border-gray-700 flex space-x-4">
-                <button className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg flex items-center justify-center">
-                  <FaSearch className="mr-2" /> Search
-                </button>
-                <button className="flex-1 bg-success-500 hover:bg-success-600 text-white py-2 rounded-lg flex items-center justify-center">
-                  <FaShoppingCart className="mr-2" /> Cart ({cartCount})
-                </button>
-              </div>
-              
-              <div className="mt-4 flex justify-center">
-                <button 
-                  onClick={toggleDarkMode}
-                  className="text-white hover:text-accent-300 flex items-center"
-                >
-                  {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-                </button>
-              </div>
-            </div>
+        {/* Mobile Menu Sidebar */}
+        <div 
+          className={`fixed inset-0 bg-black/60 transition-opacity md:hidden ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} 
+          onClick={() => setIsMenuOpen(false)} 
+        />
+        <div className={`fixed top-0 right-0 h-full w-64 bg-light-card dark:bg-dark-card shadow-2xl transition-transform duration-300 md:hidden z-[110] ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+          <div className="p-6 flex justify-between items-center border-b border-light-section dark:border-dark-border">
+            <span className="font-bold text-gold-light uppercase tracking-widest">Menu</span>
+            <button onClick={() => setIsMenuOpen(false)} className="text-2xl text-light-text dark:text-dark-text">
+              <FaTimes />
+            </button>
           </div>
-        )}
-      </div>
-    </header>
+          <div className="flex flex-col p-4 space-y-2">
+            {navLinks.map((link) => (
+              <button
+                key={link.name}
+                onClick={() => { navigate(link.href); setIsMenuOpen(false); }}
+                className="text-left py-3 px-4 rounded-xl text-light-text dark:text-dark-text hover:bg-light-section dark:hover:bg-dark-border transition"
+              >
+                {link.name}
+              </button>
+            ))}
+            <hr className="border-light-section dark:border-dark-border my-2" />
+            <button 
+              onClick={() => { navigate("/auth"); setIsMenuOpen(false); }} 
+              className="text-left py-3 px-4 rounded-xl text-gold-light font-bold"
+            >
+              Account Login
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Spacer */}
+      <div className="h-20"></div>
+    </>
   );
 };
+
+// Reusable Sub-components
+const IconBtn = ({ children, onClick }) => (
+  <button
+    onClick={onClick}
+    className="text-2xl text-light-body dark:text-dark-text hover:text-gold-light transition"
+  >
+    {children}
+  </button>
+);
+
+const BadgeIcon = ({ icon, count, onClick }) => (
+  <button
+    onClick={onClick}
+    className="relative text-xl md:text-2xl text-light-body dark:text-dark-text hover:text-gold-light transition"
+  >
+    {icon}
+    {count > 0 && (
+      <span className="absolute -top-1.5 -right-1.5 md:-top-2 md:-right-2 bg-gold-light text-black text-[10px] md:text-xs h-4 w-4 md:h-5 md:w-5 rounded-full flex items-center justify-center shadow font-bold">
+        {count}
+      </span>
+    )}
+  </button>
+);
+
+const DropItem = ({ text, onClick }) => (
+  <button
+    onClick={onClick}
+    className="block w-full text-left px-5 py-3 text-sm font-medium text-light-body dark:text-dark-body hover:bg-light-section dark:hover:bg-dark-border hover:text-gold-light transition"
+  >
+    {text}
+  </button>
+);
 
 export default Navbar;

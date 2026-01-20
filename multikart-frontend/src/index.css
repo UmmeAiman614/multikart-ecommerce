@@ -1,23 +1,22 @@
-/* src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Reset all margins and paddings */
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  box-sizing: border-box; /* Prevent content overflow */
 }
 
-/* Base styles for light/dark mode */
-html, body {
+/* Full viewport height & width */
+html, body, #root {
   width: 100%;
-  overflow-x: hidden;
-  @apply bg-white text-secondary-900;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  height: 100%;
+  overflow-x: hidden; /* prevent horizontal scroll */
 }
 
-/* Dark mode styles */
-html.dark, body.dark {
-  @apply bg-secondary-900 text-white;
+html,
+body {
+  @apply bg-light-bg dark:bg-dark-bg;
 }

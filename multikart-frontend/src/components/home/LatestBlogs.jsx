@@ -1,17 +1,5 @@
 // src/components/LatestBlogs.jsx
-import { useState, useEffect } from 'react';
-
 const LatestBlogs = () => {
-  const [darkMode, setDarkMode] = useState(false);
-
-  // Detect system preference
-  useEffect(() => {
-    const isDark = localStorage.getItem('darkMode') === 'true' || 
-                  (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setDarkMode(isDark);
-  }, []);
-
-  // Blog data
   const blogs = [
     {
       id: 1,
@@ -43,14 +31,14 @@ const LatestBlogs = () => {
   ];
 
   return (
-    <section className="py-16 px-4 sm:px-6 lg:px-8">
+    <section className="py-16 px-4 sm:px-6 lg:px-8 bg-light-bg dark:bg-dark-bg">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-light-text dark:text-dark-text mb-4">
             Latest From Our Blog
           </h2>
-          <p className={`max-w-2xl mx-auto text-lg ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className="max-w-2xl mx-auto text-lg text-light-body dark:text-dark-body">
             Expert insights, styling tips, and jewelry care advice
           </p>
         </div>
@@ -58,21 +46,23 @@ const LatestBlogs = () => {
         {/* Blogs Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {blogs.map((blog) => (
-            <div 
+            <div
               key={blog.id}
-              className={`group relative overflow-hidden rounded-xl shadow-sm transition-all duration-300 hover:shadow-md ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              }`}
+              className="group relative overflow-hidden rounded-xl shadow-sm transition-all duration-300 hover:shadow-md
+           bg-light-card dark:bg-[#1F1F1F] border border-light-section dark:border-[#2C2C2C]"
+
+
+            
             >
               {/* Image Container */}
               <div className="relative h-64 overflow-hidden">
-                <img 
-                  src={blog.image} 
+                <img
+                  src={blog.image}
                   alt={blog.title}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {
                     e.target.src = "https://via.placeholder.com/600x400/f1f5f9/64748b?text=Blog+Image";
-                    e.target.className = "w-full h-full object-cover bg-gray-200 dark:bg-gray-800";
+                    e.target.className = "w-full h-full object-cover bg-light-section dark:bg-dark-card";
                   }}
                 />
               </div>
@@ -80,46 +70,30 @@ const LatestBlogs = () => {
               {/* Blog Content */}
               <div className="p-6">
                 {/* Title */}
-                <h3 className={`font-bold text-xl mb-3 line-clamp-2 ${
-                  darkMode ? 'text-white' : 'text-gray-900'
-                }`}>
+                <h3 className="font-bold text-xl mb-3 line-clamp-2 text-light-text dark:text-dark-text">
                   {blog.title}
                 </h3>
-                
+
                 {/* Description */}
-                <p className={`mb-4 line-clamp-3 ${
-                  darkMode ? 'text-gray-400' : 'text-gray-600'
-                }`}>
+                <p className="mb-4 line-clamp-3 text-light-body dark:text-dark-body">
                   {blog.description}
                 </p>
-                
+
                 {/* Author & Date */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`font-medium ${
-                      darkMode ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {blog.author}
-                    </p>
-                    <p className={`text-sm ${
-                      darkMode ? 'text-gray-500' : 'text-gray-500'
-                    }`}>
-                      {blog.date}
-                    </p>
+                    <p className="font-medium text-light-text dark:text-dark-text">{blog.author}</p>
+                    <p className="text-sm text-light-muted dark:text-dark-muted">{blog.date}</p>
                   </div>
-                  <span className={`text-sm font-medium ${
-                    darkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    {blog.readTime}
-                  </span>
+                  <span className="text-sm font-medium text-light-body dark:text-dark-body">{blog.readTime}</span>
                 </div>
-                
+
                 {/* Read More Link */}
-                <a 
+                <a
                   href={`/blog/${blog.id}`}
-                  className={`mt-4 inline-flex items-center text-sm font-bold border-b-2 border-transparent hover:border-accent-500 ${
-                    darkMode ? 'text-white hover:text-accent-300' : 'text-gray-900 hover:text-accent-500'
-                  } transition-colors`}
+                  className="mt-4 inline-flex items-center text-sm font-bold border-b-2 border-transparent
+                    text-light-text hover:text-accent-rose hover:border-accent-rose transition-colors
+                    dark:text-dark-text dark:hover:text-accent-roseDark dark:hover:border-accent-roseDark"
                 >
                   Read More
                 </a>
