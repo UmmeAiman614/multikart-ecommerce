@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   FaHeart,
   FaShoppingCart,
@@ -8,68 +8,119 @@ import {
   FaFilter,
   FaTimes
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Breadcrumb from "../components/shared/Breadcrumb";
+import { getAllProducts, getAllCategories, addToCart } from "../api/api";
+import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-hot-toast";
+import { useCart } from "../context/CartContext"; 
 
 const Products = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const { addToCart: addToCartContext } = useCart();
+
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([{ id: "all", name: "All Products" }]);
+  const [loading, setLoading] = useState(true);
+  const [cartLoading, setCartLoading] = useState(null); // Track specific product being added
+
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [priceRange, setPriceRange] = useState(1000);
+  const [priceRange, setPriceRange] = useState(10000);
   const [sortBy, setSortBy] = useState("featured");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // Mobile filter state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [addedItem, setAddedItem] = useState(null); // Track which item was just added
 
   const productsPerPage = 6;
 
+  // 1. Fetch Data
   useEffect(() => {
-    const isDark =
-      localStorage.getItem("darkMode") === "true" ||
-      (!("darkMode" in localStorage) &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches);
-    setDarkMode(isDark);
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
+        const [prodRes, catRes] = await Promise.all([
+          getAllProducts(),
+          getAllCategories()
+        ]);
+        setProducts(prodRes.data);
+        const dynamicCats = catRes.data.map(c => ({ id: c._id, name: c.catName }));
+        setCategories([{ id: "all", name: "All Products" }, ...dynamicCats]);
+      } catch (error) {
+        toast.error("Failed to load inventory");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInitialData();
   }, []);
 
-  const categories = [
-    { id: "all", name: "All Products" },
-    { id: "necklaces", name: "Necklaces" },
-    { id: "rings", name: "Rings" },
-    { id: "earrings", name: "Earrings" },
-    { id: "bracelets", name: "Bracelets" },
-  ];
+  // 2. Add to Cart Logic
+ const handleAddToCart = async (product) => {
+    // Check if user is logged in
+    if (!user) {
+      toast.error("Please login to shop");
+      return navigate("/auth");
+    }
 
-  const products = [
-    { id: 1, name: "Diamond Stud Earrings", price: 199, image: "/images/16.jpg", category: "earrings" },
-    { id: 2, name: "Solitaire Engagement Ring", price: 599, image: "/images/10.jpg", category: "rings" },
-    { id: 3, name: "Pearl Pendant Necklace", price: 249, image: "/images/4.jpg", category: "necklaces" },
-    { id: 4, name: "Gold Chain Bracelet", price: 179, image: "/images/22.jpg", category: "bracelets" },
-    { id: 5, name: "Hoop Earrings", price: 129, image: "/images/17.jpg", category: "earrings" },
-    { id: 6, name: "Vintage Band Ring", price: 299, image: "/images/11.jpg", category: "rings" },
-    { id: 7, name: "Sapphire Locket", price: 349, image: "/images/7.jpg", category: "necklaces" },
-    { id: 8, name: "Tennis Bracelet", price: 449, image: "/images/23.jpg", category: "bracelets" },
-    { id: 9, name: "Chandelier Earrings", price: 279, image: "/images/19.jpg", category: "earrings" },
-  ];
+    try {
+      setCartLoading(product._id);
+      
+      const priceToCharge = product.isOnSale ? product.salePrice : product.price;
 
-  /* ---------------- FILTER + SORT ---------------- */
-  let filteredProducts = products.filter(
-    (p) =>
-      (selectedCategory === "all" || p.category === selectedCategory) &&
-      p.price <= priceRange
-  );
+      // A. Database update (Jo aap pehle kar rahi thin)
+      const cartItemApi = {
+        product: product._id,
+        quantity: 1,
+        price: priceToCharge
+      };
+      await addToCart(cartItemApi);
 
-  if (sortBy === "price-low") filteredProducts.sort((a, b) => a.price - b.price);
-  if (sortBy === "price-high") filteredProducts.sort((a, b) => b.price - a.price);
+      // B. Context Update (Ye Checkout page ke liye zaroori hai) 👈 IMPORTANT
+      const productForContext = {
+        _id: product._id,
+        name: product.name,
+        price: priceToCharge,
+        image: product.image
+      };
+      addToCartContext(productForContext, 1); 
+
+      // Visual Success Feedback
+      setAddedItem(product._id);
+      toast.success(`${product.name} added to cart!`);
+
+      setTimeout(() => setAddedItem(null), 2000);
+
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add to cart");
+    } finally {
+      setCartLoading(null);
+    }
+  };
+
+  /* ---------------- FILTER + SORT LOGIC ---------------- */
+  let filteredProducts = products.filter((p) => {
+    const pCatId = typeof p.category === 'object' ? p.category?._id : p.category;
+    const categoryMatch = selectedCategory === "all" || pCatId === selectedCategory;
+    const currentPrice = p.isOnSale ? p.salePrice : p.price;
+    const priceMatch = currentPrice <= priceRange;
+    return categoryMatch && priceMatch;
+  });
+
+  if (sortBy === "price-low") filteredProducts.sort((a, b) => (a.isOnSale ? a.salePrice : a.price) - (b.isOnSale ? b.salePrice : b.price));
+  if (sortBy === "price-high") filteredProducts.sort((a, b) => (b.isOnSale ? b.salePrice : b.price) - (a.isOnSale ? a.salePrice : a.price));
   if (sortBy === "name") filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
   const startIndex = (currentPage - 1) * productsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, startIndex + productsPerPage);
 
-  const breadcrumbPaths = [{ name: "Home", href: "/" }, { name: "Products" }];
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-gold-light">Loading Collection...</div>;
 
   return (
     <div className="py-10 px-4 bg-light-bg dark:bg-dark-bg transition-colors min-h-screen relative">
       <div className="max-w-7xl mx-auto">
-        <Breadcrumb paths={breadcrumbPaths} />
+        <Breadcrumb paths={[{ name: "Home", href: "/" }, { name: "Products" }]} />
 
         {/* TOP BAR */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-6 mb-6">
@@ -78,8 +129,7 @@ const Products = () => {
           </p>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
-             {/* Mobile Filter Button */}
-            <button 
+            <button
               onClick={() => setIsFilterOpen(true)}
               className="lg:hidden flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gold-light text-white rounded-lg text-sm font-bold"
             >
@@ -89,7 +139,7 @@ const Products = () => {
             <select
               value={sortBy}
               onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-              className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-none"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-none dark:text-dark-text"
             >
               <option value="featured">Sort by: Featured</option>
               <option value="price-low">Price: Low to High</option>
@@ -100,23 +150,14 @@ const Products = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* MOBILE OVERLAY */}
-          {isFilterOpen && (
-            <div 
-              className="fixed inset-0 bg-black/50 z-[150] lg:hidden backdrop-blur-sm"
-              onClick={() => setIsFilterOpen(false)}
-            />
-          )}
-
-          {/* SIDEBAR (Responsive) */}
+          {/* SIDEBAR */}
           <aside className={`
             fixed inset-y-0 left-0 z-[200] w-72 bg-light-card dark:bg-dark-card p-6 shadow-2xl transition-transform duration-300 transform
             ${isFilterOpen ? "translate-x-0" : "-translate-x-full"}
             lg:relative lg:translate-x-0 lg:w-1/4 lg:z-0 lg:shadow-sm lg:rounded-xl lg:border lg:border-light-section lg:dark:border-dark-border lg:block self-start
           `}>
             <div className="flex justify-between items-center mb-6 lg:mb-4">
-              <h3 className="font-bold text-lg text-light-text dark:text-dark-text">Categories</h3>
+              <h3 className="font-bold text-lg text-light-text dark:text-dark-text uppercase tracking-widest">Categories</h3>
               <button onClick={() => setIsFilterOpen(false)} className="lg:hidden text-light-body dark:text-dark-body">
                 <FaTimes size={20} />
               </button>
@@ -129,7 +170,7 @@ const Products = () => {
                     onClick={() => {
                       setSelectedCategory(cat.id);
                       setCurrentPage(1);
-                      setIsFilterOpen(false); // Auto close on mobile
+                      setIsFilterOpen(false);
                     }}
                     className={`w-full px-4 py-2.5 text-left rounded-lg text-sm font-medium transition
                       ${selectedCategory === cat.id
@@ -148,7 +189,7 @@ const Products = () => {
               <input
                 type="range"
                 min="0"
-                max="1000"
+                max="10000"
                 value={priceRange}
                 onChange={(e) => { setPriceRange(Number(e.target.value)); setCurrentPage(1); }}
                 className="w-full accent-gold-light h-1.5 bg-gray-200 dark:bg-dark-border rounded-lg appearance-none cursor-pointer"
@@ -159,23 +200,63 @@ const Products = () => {
           {/* PRODUCTS GRID */}
           <section className="lg:w-3/4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentProducts.map((product) => (
-              <div key={product.id} className="group bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border rounded-xl shadow-md overflow-hidden">
+              <div key={product._id} className="group bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border rounded-xl shadow-md overflow-hidden flex flex-col">
                 <div className="relative h-64 overflow-hidden bg-white">
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                  
-                  {/* Hover Icons Overlay */}
+                  <div className="absolute top-3 left-3 z-10 flex flex-col gap-2">
+                    {product.isOnSale && (
+                      <span className="bg-accent-rose text-white text-[9px] font-bold px-2 py-1 rounded uppercase tracking-tighter">Sale</span>
+                    )}
+                    {product.isFeatured && (
+                      <span className="bg-gold-light text-white text-[9px] font-bold px-2 py-1 rounded uppercase tracking-tighter">Featured</span>
+                    )}
+                  </div>
+
+                  <img
+                    src={product.image || "/placeholder-jewelry.jpg"}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gold-light hover:bg-gold-light hover:text-white transition-all shadow-lg"><FaEye /></button>
+                    <Link to={`/product/${product._id}`} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gold-light hover:bg-gold-light hover:text-white transition-all shadow-lg"><FaEye /></Link>
                     <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gold-light hover:bg-gold-light hover:text-white transition-all shadow-lg"><FaHeart /></button>
                   </div>
                 </div>
 
-                <div className="p-4">
-                  <h3 className="font-semibold text-sm mb-1 text-light-text dark:text-dark-text">{product.name}</h3>
-                  <p className="font-bold text-gold-light mb-4">${product.price}</p>
-                  <div className="flex gap-2">
-                    <Link to={`/product/${product.id}`} className="flex-1 text-center text-[10px] font-bold uppercase py-2 border border-gold-light text-gold-light rounded hover:bg-gold-light hover:text-white transition">Details</Link>
-                    <button className="flex-1 text-[10px] font-bold uppercase py-2 bg-gold-light text-white rounded hover:bg-gold-hover transition">Add to Cart</button>
+                <div className="p-4 flex flex-col flex-grow">
+                  <h3 className="font-semibold text-sm mb-1 text-light-text dark:text-dark-text line-clamp-1">{product.name}</h3>
+                  <div className="flex items-center gap-2 mb-4">
+                    {product.isOnSale ? (
+                      <>
+                        <p className="font-bold text-gold-light">${product.salePrice}</p>
+                        <p className="text-xs text-light-muted line-through opacity-60">${product.price}</p>
+                      </>
+                    ) : (
+                      <p className="font-bold text-gold-light">${product.price}</p>
+                    )}
+                  </div>
+                  <div className="mt-auto flex gap-2">
+                    <Link to={`/product/${product._id}`} className="flex-1 text-center text-[10px] font-bold uppercase py-2 border border-gold-light text-gold-light rounded hover:bg-gold-light hover:text-white transition">Details</Link>
+
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      disabled={cartLoading === product._id}
+                      className={`flex-1 text-[10px] font-bold uppercase py-2 rounded transition flex items-center justify-center gap-2 
+        ${addedItem === product._id
+                          ? "bg-green-600 text-white"
+                          : "bg-gold-light text-white hover:bg-gold-hover"
+                        } disabled:opacity-70`}
+                    >
+                      {cartLoading === product._id ? (
+                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : addedItem === product._id ? (
+                        <>✓ Added!</>
+                      ) : (
+                        <>
+                          <FaShoppingCart size={12} /> Add to Cart
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -187,11 +268,11 @@ const Products = () => {
         {totalPages > 1 && (
           <div className="flex justify-center mt-12 mb-10">
             <div className="flex items-center gap-1 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border p-1.5 rounded-full">
-              <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="w-9 h-9 flex items-center justify-center hover:bg-gold-light hover:text-white rounded-full transition disabled:opacity-30"><FaChevronLeft size={12}/></button>
+              <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="w-9 h-9 flex items-center justify-center hover:bg-gold-light hover:text-white rounded-full transition disabled:opacity-30 dark:text-dark-text"><FaChevronLeft size={12} /></button>
               {Array.from({ length: totalPages }).map((_, i) => (
-                <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-9 h-9 rounded-full text-xs font-bold ${currentPage === i + 1 ? "bg-gold-light text-white" : "hover:bg-light-section dark:hover:bg-dark-border"}`}>{i + 1}</button>
+                <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-9 h-9 rounded-full text-xs font-bold ${currentPage === i + 1 ? "bg-gold-light text-white" : "hover:bg-light-section dark:hover:bg-dark-border dark:text-dark-text"}`}>{i + 1}</button>
               ))}
-              <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="w-9 h-9 flex items-center justify-center hover:bg-gold-light hover:text-white rounded-full transition disabled:opacity-30"><FaChevronRight size={12}/></button>
+              <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="w-9 h-9 flex items-center justify-center hover:bg-gold-light hover:text-white rounded-full transition disabled:opacity-30 dark:text-dark-text"><FaChevronRight size={12} /></button>
             </div>
           </div>
         )}

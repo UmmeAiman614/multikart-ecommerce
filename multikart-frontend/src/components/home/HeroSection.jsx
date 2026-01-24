@@ -13,7 +13,7 @@ const HeroSection = () => {
       ></div>
 
       {/* Always dark overlay for better contrast */}
-      <div className="absolute inset-0 bg-black/50"></div>
+      <div className="absolute inset-0 bg-black/70"></div>
 
       {/* Hero content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4 sm:px-6 lg:px-8">
@@ -38,7 +38,7 @@ const HeroSection = () => {
       </div>
 
       {/* Decorative bottom wave */}
-      <div className="absolute bottom-0 left-0 w-full h-16 text-light-bg dark:text-dark-card">
+      <div className="absolute bottom-0 left-0 w-full h-16 text-gold-light dark:text-gold-dark">
         <svg 
           viewBox="0 0 1440 100" 
           fill="none" 

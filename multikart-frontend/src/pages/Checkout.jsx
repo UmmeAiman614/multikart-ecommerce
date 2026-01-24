@@ -1,213 +1,204 @@
 import React, { useState } from 'react';
 import Breadcrumb from '../components/shared/Breadcrumb';
+import { useCart } from '../context/CartContext'; 
+import { createOrder, applyCoupon as apiApplyCoupon } from '../api/api'; 
+import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { FaCheckCircle, FaSpinner } from 'react-icons/fa'; // Icons for success and loading
 
 const CheckoutPage = () => {
-  // Toggle states for hidden sections
+  const navigate = useNavigate();
+  const { cartItems, subtotal, clearCart, discountPercent, setDiscountPercent } = useCart();
+  
   const [showLogin, setShowLogin] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false); // New state for success UI
 
-  const breadcrumbPaths = [ 
-    { name: "Home", href: "/" },
-    { name: "Shop", href: "/products" },
-    { name: "Checkout" },
-  ];
+  const [formData, setFormData] = useState({
+    firstName: '', lastName: '', address: '', city: '', phone: '', email: '', orderNote: ''
+  });
 
-  return (
-    <main className="min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300 pb-20">
-      {/* Breadcrumb Section */}
-      <div className="bg-light-section dark:bg-dark-card py-4 border-b border-light-section dark:border-dark-border">
-        <div className="max-w-7xl mx-auto px-4 md:px-10">
-          <Breadcrumb paths={breadcrumbPaths} />
+  // Calculations
+  const shippingFee = subtotal > 0 && subtotal < 1000 ? 50 : 0; 
+  const discountAmount = (subtotal * discountPercent) / 100;
+  const totalAmount = subtotal + shippingFee - discountAmount;
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return toast.error("Please enter a coupon code");
+    try {
+      setIsApplying(true);
+      const res = await apiApplyCoupon({ code: couponCode.toUpperCase() });
+      setDiscountPercent(res.data.discount);
+      toast.success(`Coupon Applied! ${res.data.discount}% OFF`);
+    } catch (err) {
+      setDiscountPercent(0);
+      toast.error(err.response?.data?.message || "Invalid Coupon");
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+
+    const requiredFields = ['firstName', 'lastName', 'address', 'city', 'phone', 'email'];
+    const emptyFields = requiredFields.filter(field => !formData[field]);
+
+    if (emptyFields.length > 0) {
+      return toast.error("Please fill all required fields (*)");
+    }
+
+    const orderData = {
+      items: cartItems.map(item => ({
+        product: item.product?._id || item._id,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      shippingDetails: formData,
+      totalAmount: totalAmount,
+      discountApplied: discountPercent,
+      paymentMethod: "Cash On Delivery"
+    };
+
+    try {
+      setIsPlacingOrder(true);
+      await createOrder(orderData);
+      
+      // Clear Cart first
+      clearCart();
+      
+      // Show Success Message on Screen
+      setOrderSuccess(true);
+
+      // Redirect to My Account after 3 seconds
+      setTimeout(() => {
+        navigate('/myaccount'); // Navigating to your Account page
+      }, 3500);
+
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Order Failed");
+      setIsPlacingOrder(false);
+    }
+  };
+
+  // SUCCESS OVERLAY UI
+  if (orderSuccess) {
+    return (
+      <div className="fixed inset-0 z-[999] bg-white dark:bg-dark-bg flex items-center justify-center text-center p-6">
+        <div className="animate-fadeIn">
+          <FaCheckCircle className="text-gold-light text-7xl mx-auto mb-6 animate-bounce" />
+          <h1 className="text-3xl font-bold mb-2 uppercase tracking-tighter dark:text-white font-serif">Order Confirmed!</h1>
+          <p className="text-light-muted dark:text-dark-muted mb-6 max-w-sm mx-auto italic">
+            Your request has been sent to the Admin. You will receive a notification once your order is processed.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-gold-light font-bold">
+            <FaSpinner className="animate-spin" />
+            <span>Redirecting to your account...</span>
+          </div>
         </div>
       </div>
+    );
+  }
 
-      <section className="max-w-7xl mx-auto px-4 md:px-10 mt-10">
-        {/* top Notification Bars */}
-        <div className="space-y-4 mb-10">
+  return (
+    <main className="min-h-screen bg-light-bg dark:bg-dark-bg pb-20 font-serif text-light-text dark:text-dark-text">
+      <div className="max-w-7xl mx-auto px-4 md:px-10 mt-10">
+        <Breadcrumb paths={[{ name: "Home", href: "/" }, { name: "Checkout" }]} />
+
+        {/* --- TABS --- */}
+        <div className="space-y-4 mb-10 mt-6">
           <div className="p-4 bg-light-section dark:bg-dark-card border-t-2 border-gold-light text-sm">
-            <p className="text-light-body dark:text-dark-body">
-              Returning Customer? <button onClick={() => setShowLogin(!showLogin)} className="text-gold-light font-bold hover:underline">Click Here To Login</button>
-            </p>
+            <p>Returning Customer? <button onClick={() => setShowLogin(!showLogin)} className="text-gold-light font-bold hover:underline">Click Here To Login</button></p>
           </div>
           {showLogin && (
-            <div className="p-6 border border-light-section dark:border-dark-border animate-fadeIn space-y-4">
-              <p className="text-xs text-light-muted dark:text-dark-muted">If you have shopped with us before, please enter your details in the boxes below.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" placeholder="Username or email" className="p-2 bg-transparent border border-light-section dark:border-dark-border focus:outline-gold-light" />
-                <input type="password" placeholder="Password" className="p-2 bg-transparent border border-light-section dark:border-dark-border focus:outline-gold-light" />
+            <div className="p-6 border dark:border-dark-border bg-white dark:bg-dark-card animate-fadeIn">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+                <input type="text" placeholder="Username" className="p-3 border dark:border-dark-border bg-transparent outline-none focus:border-gold-light dark:text-white" />
+                <input type="password" placeholder="Password" className="p-3 border dark:border-dark-border bg-transparent outline-none focus:border-gold-light dark:text-white" />
+                <button className="bg-gold-light text-white px-8 py-3 uppercase text-xs font-bold">Login</button>
               </div>
-              <button className="bg-gold-light text-white px-6 py-2 uppercase text-xs font-bold">Login</button>
             </div>
           )}
 
-
-
-          {/* Coupon Notification Bar */}
-          <div className="space-y-4 mb-10">
-            <div className="p-4 bg-light-section dark:bg-dark-card border-t-2 border-gold-light text-sm">
-              <p className="text-light-body dark:text-dark-body">
-                Have A Coupon? <button
-                  onClick={() => setShowCoupon(!showCoupon)}
-                  className="text-gold-light font-bold hover:underline"
-                >
-                  Click Here To Enter Your Code
-                </button>
-              </p>
-            </div>
-
-            {/* Coupon Input Area - Shows when toggled */}
-            {showCoupon && (
-              <div className="p-6 border border-light-section dark:border-dark-border animate-fadeIn bg-light-card dark:bg-dark-card rounded-sm">
-                <p className="text-sm text-light-muted dark:text-dark-muted mb-4">
-                  If you have a coupon code, please apply it below.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 max-w-md">
-                  <input
-                    type="text"
-                    placeholder="Coupon code"
-                    className="flex-grow p-3 bg-light-bg dark:bg-dark-bg border border-light-section dark:border-dark-border text-light-text dark:text-dark-text focus:outline-gold-light placeholder:text-light-muted dark:placeholder:text-dark-muted"
-                  />
-                  <button
-                    className="bg-gold-light hover:bg-gold-hover text-white px-8 py-3 uppercase text-xs font-bold transition-all duration-300"
-                  >
-                    Apply Coupon
-                  </button>
-                </div>
-              </div>
-            )}
+          <div className="p-4 bg-light-section dark:bg-dark-card border-t-2 border-gold-light text-sm">
+            <p>Have A Coupon? <button onClick={() => setShowCoupon(!showCoupon)} className="text-gold-light font-bold hover:underline">Enter Code</button></p>
           </div>
+          {showCoupon && (
+            <div className="p-6 border dark:border-dark-border bg-white dark:bg-dark-card animate-fadeIn">
+              <div className="flex flex-col sm:flex-row gap-4 max-w-md">
+                <input 
+                  type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="Enter Coupon" className="flex-grow p-3 border dark:border-dark-border bg-transparent outline-none uppercase dark:text-white" 
+                />
+                <button onClick={handleApplyCoupon} disabled={isApplying} className="bg-gold-light text-white px-8 py-3 uppercase text-xs font-bold">
+                  {isApplying ? "..." : "Apply"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Left Side: Billing Details */}
+          {/* BILLING */}
           <div className="lg:col-span-7 space-y-8">
-            <h2 className="text-2xl font-bold text-light-text dark:text-dark-text border-b border-light-section dark:border-dark-border pb-4">Billing Details</h2>
-
+            <h2 className="text-2xl font-bold border-b dark:border-dark-border pb-4">Billing Details</h2>
             <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">First Name *</label>
-                <input type="text" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">Last Name *</label>
-                <input type="text" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">Company Name</label>
-                <input type="text" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">Country *</label>
-                <select className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light">
-                  <option>Afghanistan</option>
-                  <option>United States</option>
-                </select>
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">Street Address *</label>
-                <input type="text" placeholder="House number and street name" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light mb-4" />
-                <input type="text" placeholder="Apartment, suite, unit etc. (optional)" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">Town / City *</label>
-                <input type="text" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">Phone *</label>
-                <input type="text" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-light-text dark:text-dark-text">Email Address *</label>
-                <input type="email" className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
-
-              <div className="md:col-span-2 pt-4">
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-light-body dark:text-dark-body">
-                  <input type="checkbox" className="accent-gold-light w-4 h-4" />
-                  Create An Account?
-                </label>
-              </div>
-
-              <div className="md:col-span-2 space-y-2 pt-6">
-                <h3 className="font-bold text-light-text dark:text-dark-text">Order Note</h3>
-                <textarea rows="4" placeholder="Notes about your order, e.g. special notes for delivery." className="w-full p-3 bg-light-card dark:bg-dark-card border border-light-section dark:border-dark-border focus:outline-gold-light" />
-              </div>
+              <input name="firstName" onChange={handleInputChange} type="text" placeholder="First Name *" className="p-3 bg-white dark:bg-dark-card border dark:border-dark-border outline-none focus:border-gold-light" />
+              <input name="lastName" onChange={handleInputChange} type="text" placeholder="Last Name *" className="p-3 bg-white dark:bg-dark-card border dark:border-dark-border outline-none focus:border-gold-light" />
+              <input name="address" onChange={handleInputChange} type="text" placeholder="Street Address *" className="md:col-span-2 p-3 bg-white dark:bg-dark-card border dark:border-dark-border outline-none focus:border-gold-light" />
+              <input name="city" onChange={handleInputChange} type="text" placeholder="Town / City *" className="md:col-span-2 p-3 bg-white dark:bg-dark-card border dark:border-dark-border outline-none focus:border-gold-light" />
+              <input name="phone" onChange={handleInputChange} type="text" placeholder="Phone *" className="p-3 bg-white dark:bg-dark-card border dark:border-dark-border outline-none focus:border-gold-light" />
+              <input name="email" onChange={handleInputChange} type="email" placeholder="Email Address *" className="p-3 bg-white dark:bg-dark-card border dark:border-dark-border outline-none focus:border-gold-light" />
+              <textarea name="orderNote" onChange={handleInputChange} rows="4" placeholder="Order Notes (Optional)" className="md:col-span-2 p-3 bg-white dark:bg-dark-card border dark:border-dark-border outline-none focus:border-gold-light" />
             </form>
           </div>
 
-          {/* Right Side: Order Summary */}
+          {/* SUMMARY */}
           <div className="lg:col-span-5">
-            <div className="bg-light-section dark:bg-dark-card p-8 border border-light-section dark:border-dark-border">
-              <h2 className="text-xl font-bold text-light-text dark:text-dark-text mb-6">Your Order Summary</h2>
+            <div className="bg-light-section dark:bg-dark-card p-8 border dark:border-dark-border shadow-sm sticky top-24">
+              <h2 className="text-xl font-bold mb-6 italic underline underline-offset-8">Review Order</h2>
+              <div className="space-y-4 mb-6">
+                {cartItems.map((item) => (
+                  <div key={item.product?._id || item._id} className="flex justify-between text-sm italic">
+                    <span>{item.product?.name || item.name} <b className="text-gold-light font-sans ml-1">x{item.quantity}</b></span>
+                    <span className="font-bold font-sans">${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
 
-              <div className="space-y-4 text-sm">
-                <div className="flex justify-between font-bold border-b border-light-section dark:border-dark-border pb-2 uppercase tracking-wider">
-                  <span>Product</span>
+              <div className="space-y-3 pt-4 border-t dark:border-dark-border text-sm">
+                <div className="flex justify-between"><span>Subtotal</span><span className="font-bold">${subtotal.toFixed(2)}</span></div>
+                <div className="flex justify-between text-gold-light"><span>Shipping</span><span className="font-bold">{shippingFee === 0 ? "FREE" : `$${shippingFee}`}</span></div>
+                {discountPercent > 0 && (
+                  <div className="flex justify-between text-green-600 font-bold italic">
+                    <span>Discount ({discountPercent}%)</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-2xl font-bold text-gold-light pt-6 border-t dark:border-dark-border">
                   <span>Total</span>
-                </div>
-
-                {/* Product List */}
-                <div className="flex justify-between text-light-body dark:text-dark-body italic">
-                  <span>Suscipit Vestibulum × 1</span>
-                  <span>$165.00</span>
-                </div>
-                <div className="flex justify-between text-light-body dark:text-dark-body italic border-b border-light-section dark:border-dark-border pb-4">
-                  <span>Ami Vestibulum recipit × 4</span>
-                  <span>$165.00</span>
-                </div>
-
-                <div className="flex justify-between font-bold pt-2">
-                  <span>Sub Total</span>
-                  <span>$400</span>
-                </div>
-
-                <div className="flex justify-between items-center py-4 border-y border-light-section dark:border-dark-border">
-                  <span className="font-bold">Shipping</span>
-                  <div className="text-right space-y-1">
-                    <label className="flex items-center justify-end gap-2">
-                      <span className="text-xs">Flat Rate: $20.00</span>
-                      <input type="radio" name="shipping" defaultChecked className="accent-gold-light" />
-                    </label>
-                    <label className="flex items-center justify-end gap-2">
-                      <span className="text-xs">Free Shipping</span>
-                      <input type="radio" name="shipping" className="accent-gold-light" />
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex justify-between text-lg font-bold text-gold-light py-4">
-                  <span>Total Amount</span>
-                  <span>$420</span>
-                </div>
-
-                {/* Payment Methods */}
-                <div className="space-y-4 pt-4">
-                  <div className="bg-light-bg dark:bg-dark-bg p-4 border-l-4 border-gold-light">
-                    <label className="flex items-center gap-3 font-bold cursor-pointer">
-                      <input type="radio" name="payment" defaultChecked className="accent-gold-light" />
-                      Cash On Delivery
-                    </label>
-                    <p className="text-xs mt-2 text-light-muted dark:text-dark-muted">Pay with cash upon delivery.</p>
-                  </div>
-
-                  {['Direct Bank Transfer', 'Pay with Check', 'Paypal'].map((method) => (
-                    <label key={method} className="flex items-center gap-3 font-bold p-2 cursor-pointer text-light-text dark:text-dark-text">
-                      <input type="radio" name="payment" className="accent-gold-light" />
-                      {method}
-                    </label>
-                  ))}
-                </div>
-
-                <div className="pt-6">
-                  <button className="w-full bg-gold-light hover:bg-gold-hover text-white font-bold py-4 uppercase tracking-widest transition-all">
-                    Place Order
-                  </button>
+                  <span className="font-sans">${totalAmount.toFixed(2)}</span>
                 </div>
               </div>
+
+              <button 
+                onClick={handlePlaceOrder}
+                disabled={isPlacingOrder}
+                className="w-full mt-8 bg-gold-light hover:bg-gold-hover text-white font-bold py-4 uppercase tracking-widest shadow-xl transition-all disabled:opacity-50 active:scale-95"
+              >
+                {isPlacingOrder ? "Placing Order..." : "Confirm & Place Order"}
+              </button>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 };
