@@ -30,7 +30,6 @@ const CouponManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Backend ko number format mein discount bhejna zaroori hai
       const finalData = { ...formData, discount: Number(formData.discount) };
       await API.post("/coupons/create", finalData);
       toast.success("Coupon Created Successfully!");
@@ -38,6 +37,21 @@ const CouponManagement = () => {
       fetchCoupons();
     } catch (err) {
       toast.error(err.response?.data?.message || "Error creating coupon");
+    }
+  };
+
+  // --- DELETE LOGIC ---
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this coupon?")) {
+      try {
+        await API.delete(`/coupons/delete/${id}`); // Aapka delete endpoint
+        toast.success("Coupon Deleted!");
+        
+        // State se foran hata do taake refresh na karna parray
+        setCoupons(coupons.filter((c) => c._id !== id));
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Failed to delete coupon");
+      }
     }
   };
 
@@ -114,10 +128,15 @@ const CouponManagement = () => {
                     </div>
 
                     <div className="flex items-center gap-4 mt-4 sm:mt-0">
-                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter ${c.isActive ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        {c.isActive ? 'Live' : 'Expired'}
+                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter ${new Date(c.expiry) > new Date() ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        {new Date(c.expiry) > new Date() ? 'Live' : 'Expired'}
                       </span>
-                      <button className="text-light-muted hover:text-red-500 dark:text-dark-muted dark:hover:text-red-400 transition-colors p-2">
+                      
+                      {/* --- WORKING DELETE BUTTON --- */}
+                      <button 
+                        onClick={() => handleDelete(c._id)}
+                        className="text-light-muted hover:text-red-500 dark:text-dark-muted dark:hover:text-red-400 transition-colors p-2 active:scale-90"
+                      >
                         <FaTrash />
                       </button>
                     </div>

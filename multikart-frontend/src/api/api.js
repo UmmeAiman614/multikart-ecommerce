@@ -86,6 +86,7 @@ export const applyCoupon = (data) => API.post("/coupons/apply", data);
 export const createCoupon = (data) => API.post("/coupons/create", data);
 export const getAllCoupons = () => API.get("/coupons/all");
 export const getLatestCoupon = () => API.get("/coupons/latest");
+export const deleteCoupon = (id) => API.delete(`/coupons/delete/${id}`);
 
 
 // ================= WISHLIST =================

@@ -120,6 +120,7 @@ const ProductFormPage = ({ isUpdate = false }) => {
         name: 'metal', label: 'Metal Type', type: 'select', 
         options: [{ label: 'Gold', value: 'gold' }, { label: 'Platinum', value: 'platinum' }, { label: 'Silver', value: 'silver' }, { label: 'Diamond', value: 'diamond' }], required: true
     },
+    {name: 'stock', label: 'Stock Quantity', type: 'number', required: true },
     { name: 'isFeatured', label: 'Featured', type: 'checkbox' },
     { name: 'isOnSale', label: 'On Sale', type: 'checkbox' },
     { name: 'salePrice', label: 'Sale Price', type: 'number' },
