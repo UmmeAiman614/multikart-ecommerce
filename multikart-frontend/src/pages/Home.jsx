@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import CategorySlider from "../components/home/CategorySlider.jsx";
 import CategoryShowcase from "../components/home/CategoryShowcase.jsx";
 import FeaturedProductsSlider from "../components/home/FeaturedProductsSlider.jsx";
+import SaleProducts from "../components/home/SaleProducts.jsx";
 import React from "react";
 import TestimonialsSlider from "../components/home/TestimonialsSlider.jsx";
 import LatestBlogs from "../components/home/LatestBlogs.jsx";
@@ -34,6 +35,7 @@ const Home = () => {
       <CategorySlider />
       <CategoryShowcase />
       <FeaturedProductsSlider />
+      <SaleProducts />
       <TestimonialsSlider />
       <LatestBlogs />
       {/* <PromoBanner /> */}

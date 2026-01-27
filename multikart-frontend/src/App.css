@@ -1,4 +1,12 @@
+html, body {
+  height: auto !important; /* Fixed height khatam karein */
+  overflow: visible !important; /* Scroll ko window level par layein */
+  scroll-behavior: smooth;
+}
 
+#root {
+  height: auto !important;
+}
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -33,4 +41,14 @@
 
 .read-the-docs {
   color: #888;
+}
+
+
+@keyframes slowZoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+
+.animate-slow-zoom {
+  animation: slowZoom 20s infinite alternate ease-in-out;
 }

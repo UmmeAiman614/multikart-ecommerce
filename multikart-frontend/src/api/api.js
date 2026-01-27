@@ -23,12 +23,17 @@ const getAuthConfig = () => {
     },
   };
 };
+
+export const fetchDashboardData = () => API.get('/admin/dashboard-summary');
 // ================= AUTH =================
 export const registerUser = (data) => API.post("/auth/register", data);
 export const loginUser = (data) => API.post("/auth/login", data);
 export const getProfile = () => API.get("/auth/profile");
 export const updateProfile = (formData) => API.put("/auth/profile/update", formData);
-
+export const getAllUsers = () => API.get("/auth/all-users");
+export const deleteUser = (id) => API.delete(`/auth/user/${id}`);
+export const updateUserAdmin = (id, data) => API.put(`/auth/user/update/${id}`, data);
+export const getUserById = (id) => API.get(`/auth/user/${id}`);
 
 // ================= CATEGORY =================
 export const addCategory = (data) => API.post("/category/add", data);
@@ -81,6 +86,13 @@ export const applyCoupon = (data) => API.post("/coupons/apply", data);
 export const createCoupon = (data) => API.post("/coupons/create", data);
 export const getAllCoupons = () => API.get("/coupons/all");
 export const getLatestCoupon = () => API.get("/coupons/latest");
+
+
+// ================= WISHLIST =================
+export const getWishlist = () => API.get("/wishlist/my-wishlist");
+export const toggleWishlist = (productId) => API.post("/wishlist/toggle", { productId });
+
+
 // ================= TESTIMONIAL =================
 export const addTestimonial = (data) =>
   API.post("/testimonial/add", data);
@@ -92,5 +104,8 @@ export const updateTestimonial = (id, data) =>
   API.put(`/testimonial/update/${id}`, data);
 export const deleteTestimonial = (id) =>
   API.delete(`/testimonial/delete/${id}`);
+
+
+
 
 export default API;

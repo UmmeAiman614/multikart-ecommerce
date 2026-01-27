@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import {Toaster} from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import "./App.css";
 import "./index.css";
 
@@ -18,12 +18,16 @@ import ContactPage from "./pages/Contact";
 import MyAccountPage from "./pages/MyAccount";
 import AuthPage from "./pages/AuthPage";
 import PromoBanner from "./components/home/PromoBanner";
+import CategoriesPage from "./pages/CategoryPage";
+import ScrollToTop from "./components/shared/ScrollToTop";
+import BackToTopButton from "./components/shared/BackToTopButton";
 
 // Admin Components
-import AdminLayout from "./components/adminPanel/common/AdminLayout"; // Create this to wrap admin routes
+import AdminLayout from "./components/adminPanel/common/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
-// Form Pages
+
+// Admin Form Pages
 import ProductFormPage from "./pages/admin/products/ProductFormPage";
 import CategoryFormPage from "./pages/admin/categories/CategoryFormPage";
 import UserFormPage from "./pages/admin/users/UserFormPage";
@@ -49,57 +53,52 @@ function App() {
 
   return (
     <Router>
+      {/* ✅ ScrollToTop yahan hone se har page change par screen top par chali jayegi */}
+      <ScrollToTop />
+      <Toaster position="top-center" reverseOrder={false} />
+
       <Routes>
-        {/* --- ADMIN ROUTES (No Store Navbar/Footer) --- */}
+        {/* --- ADMIN ROUTES --- */}
         <Route
           path="/admin/*"
           element={
             <ProtectedRoute>
-            <AdminLayout darkMode={darkMode} setDarkMode={setDarkMode}>
-              <Routes>
-                {/* Main Dashboard */}
-                <Route path="/" element={<Dashboard />} />
-
-                {/* Ecommerce / Products */}
-                <Route path="ecommerce/product-list" element={<ProductListPage />} />
-                <Route path="ecommerce/add-product" element={<ProductFormPage />} />
-                <Route path="ecommerce/update-product/:id" element={<ProductFormPage isUpdate={true} />} />
-
-                {/* Categories */}
-                <Route path="categories/list" element={<CategoryListPage />} />
-                <Route path="categories/add-category" element={<CategoryFormPage />} />
-                <Route path="categories/update-category/:id" element={<CategoryFormPage isUpdate={true} />} />
-
-                {/* Orders */}
-                <Route path="orders/pending" element={<OrdersListPage type="Pending" />} />
-                <Route path="orders/shipped" element={<OrdersListPage type="shipped" />} />
-                <Route path="orders/completed" element={<OrdersListPage type="Completed" />} />
-
-                {/* Users */}
-                <Route path="users/list" element={<UserListPage />} />
-                <Route path="users/add-user" element={<UserFormPage />} />
-                <Route path="users/update-user/:id" element={<UserFormPage isUpdate={true} />} />
-
-                {/* Testimonials */}
-                <Route path="testimonials" element={<TestimonialListPage />} />
-                <Route path="reviews" element={<ReviewsManagement />} />
-                <Route path="coupons" element={<CouponManagement />} />
-              </Routes>
-
-            </AdminLayout>
+              <AdminLayout darkMode={darkMode} setDarkMode={setDarkMode}>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="ecommerce/product-list" element={<ProductListPage />} />
+                  <Route path="ecommerce/add-product" element={<ProductFormPage />} />
+                  <Route path="ecommerce/update-product/:id" element={<ProductFormPage isUpdate={true} />} />
+                  <Route path="categories/list" element={<CategoryListPage />} />
+                  <Route path="categories/add-category" element={<CategoryFormPage />} />
+                  <Route path="categories/update-category/:id" element={<CategoryFormPage isUpdate={true} />} />
+                  <Route path="orders/pending" element={<OrdersListPage type="Pending" />} />
+                  <Route path="orders/shipped" element={<OrdersListPage type="shipped" />} />
+                  <Route path="orders/completed" element={<OrdersListPage type="Completed" />} />
+                  <Route path="users/list" element={<UserListPage />} />
+                  <Route path="users/add-user" element={<UserFormPage />} />
+                  <Route path="users/update-user/:id" element={<UserFormPage isUpdate={true} />} />
+                  <Route path="testimonials" element={<TestimonialListPage />} />
+                  <Route path="reviews" element={<ReviewsManagement />} />
+                  <Route path="coupons" element={<CouponManagement />} />
+                </Routes>
+              </AdminLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* --- STOREFRONT ROUTES (With Navbar/Footer) --- */}
+        {/* --- STOREFRONT ROUTES --- */}
         <Route
           path="*"
           element={
-            <div className="min-h-screen w-full flex flex-col bg-light-bg dark:bg-dark-bg text-light-body dark:text-dark-body transition-colors duration-300">
-              <Toaster />
+            <div className="min-h-screen w-full flex flex-col bg-light-bg dark:bg-dark-bg text-light-body dark:text-dark-body transition-colors duration-300 relative">
               <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
               <PromoBanner />
-              <main className="flex-grow w-full">
+              
+              {/* ✅ BackToTopButton ko Navbar aur Footer ke beech rakha hai */}
+              <BackToTopButton />
+
+              <main className="flex-grow w-full overflow-x-hidden">
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/products" element={<Products />} />
@@ -111,8 +110,10 @@ function App() {
                   <Route path="/contact" element={<ContactPage />} />
                   <Route path="/myaccount" element={<MyAccountPage />} />
                   <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/categories" element={<CategoriesPage />} />
                 </Routes>
               </main>
+              
               <Footer />
             </div>
           }

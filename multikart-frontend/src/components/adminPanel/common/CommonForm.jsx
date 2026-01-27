@@ -9,7 +9,6 @@ const CommonForm = ({ title, fields, formData, onChange, onSubmit, buttonText, i
       
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {fields.map((field) => {
-          // Check if the field is a checkbox to apply different layout
           const isCheckbox = field.type === 'checkbox';
 
           return (
@@ -17,7 +16,6 @@ const CommonForm = ({ title, fields, formData, onChange, onSubmit, buttonText, i
               key={field.name} 
               className={`${field.fullWidth ? 'md:col-span-2' : ''} flex ${isCheckbox ? 'flex-row items-center gap-3 py-2' : 'flex-col gap-2'}`}
             >
-              {/* Label handling for Checkbox vs Other inputs */}
               {!isCheckbox && (
                 <label className="text-sm font-semibold text-light-body dark:text-dark-body">
                   {field.label} {field.required && <span className="text-accent-rose">*</span>}
@@ -48,7 +46,7 @@ const CommonForm = ({ title, fields, formData, onChange, onSubmit, buttonText, i
                     type="checkbox"
                     id={field.name}
                     name={field.name}
-                    checked={!!formData[field.name]} // Ensure boolean
+                    checked={!!formData[field.name]}
                     onChange={onChange}
                     className="w-5 h-5 rounded border-gold-light/40 text-gold-light focus:ring-gold-light bg-light-bg dark:bg-dark-bg dark:border-dark-border cursor-pointer transition-all accent-gold-light"
                   />
@@ -60,9 +58,12 @@ const CommonForm = ({ title, fields, formData, onChange, onSubmit, buttonText, i
                 <input
                   type={field.type}
                   name={field.name}
+                  // File input ke liye value hamesha undefined honi chahiye
                   value={field.type !== 'file' ? formData[field.name] || '' : undefined}
                   onChange={onChange}
                   placeholder={field.placeholder}
+                  // ✅ YEH LINE ADD KI HAI: Ab multiple selection kaam karega
+                  multiple={field.type === 'file' && field.multiple} 
                   className="h-11 rounded-lg border border-light-section bg-light-bg px-4 text-sm outline-none focus:ring-1 focus:ring-gold-light dark:border-dark-border dark:bg-dark-bg dark:text-dark-text file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-gold-light/10 file:text-gold-light hover:file:bg-gold-light/20 transition-all"
                 />
               )}
