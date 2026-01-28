@@ -89,7 +89,7 @@ const Navbar = () => {
             {/* RIGHT: Action Icons */}
             <div className="flex items-center gap-3 md:gap-6">
               
-              {/* Desktop Only: Wishlist & Theme */}
+              {/* Desktop Only Icons */}
               <div className="hidden md:flex items-center gap-5">
                 <BadgeIcon icon={<FaHeart />} count={wishlistCount} onClick={() => navigate("/wishlist")} />
                 <button 
@@ -103,12 +103,25 @@ const Navbar = () => {
               {/* Always Visible: Cart */}
               <BadgeIcon icon={<FaShoppingCart />} count={cartCount} onClick={() => navigate("/viewcart")} />
 
-              {/* User Dropdown (Desktop Hover Logic Fixed) */}
+              {/* User Section (Updated with Image Logic) */}
               <div className="hidden md:block relative group">
-                <button onClick={() => navigate(user ? "/myaccount" : "/auth")}
-                  className={`text-2xl transition ${user ? 'text-gold-light' : 'text-light-body dark:text-dark-text hover:text-gold-light'}`}>
-                  <FaUser />
+                <button 
+                  onClick={() => navigate(user ? "/myaccount" : "/auth")}
+                  className="flex items-center justify-center transition focus:outline-none"
+                >
+                  {user?.image ? (
+                    <img 
+                      src={user.image} 
+                      alt="Profile" 
+                      className="w-9 h-9 rounded-full object-cover border-2 border-gold-light shadow-sm"
+                    />
+                  ) : (
+                    <div className={`text-2xl ${user ? 'text-gold-light' : 'text-light-body dark:text-dark-text hover:text-gold-light'}`}>
+                      <FaUser />
+                    </div>
+                  )}
                 </button>
+
                 {user && (
                   <div className="absolute right-0 pt-4 w-52 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                     <div className="bg-light-card dark:bg-dark-card rounded-2xl shadow-xl overflow-hidden border border-light-section dark:border-dark-border p-1">
@@ -117,7 +130,6 @@ const Navbar = () => {
                           <p className="text-sm font-bold truncate dark:text-white">{user.name}</p>
                         </div>
                         
-                        {/* ADMIN DASHBOARD LINK (RESTORED) */}
                         {user.role === 'admin' && (
                           <DropItem 
                             onClick={() => navigate("/admin")} 
@@ -138,7 +150,7 @@ const Navbar = () => {
               </div>
 
               {/* Mobile Menu Button */}
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-2xl text-gold-light ml-1">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-2xl text-gold-light ml-1 focus:outline-none">
                 {isMenuOpen ? <FaTimes /> : <FaBars />}
               </button>
             </div>
@@ -154,6 +166,7 @@ const Navbar = () => {
           </div>
           
           <div className="flex flex-col p-4 space-y-2">
+            {/* Mobile Mode & Wishlist Quick Access */}
             <div className="flex justify-around items-center py-4 bg-light-bg dark:bg-dark-bg rounded-2xl mb-4 border border-light-section dark:border-dark-border">
                <button onClick={() => setDarkMode(!darkMode)} className="flex flex-col items-center gap-1 text-gold-light">
                   {darkMode ? <FaSun size={20}/> : <FaMoon size={20}/>}
@@ -170,6 +183,7 @@ const Navbar = () => {
                </button>
             </div>
 
+            {/* Links */}
             {navLinks.map((link) => (
               <button key={link.name} onClick={() => { navigate(link.href); setIsMenuOpen(false); }}
                 className={`text-left py-3 px-4 rounded-xl transition flex justify-between items-center
@@ -183,9 +197,24 @@ const Navbar = () => {
             <hr className="dark:border-dark-border my-2" />
             
             {!user ? (
-              <button onClick={() => { navigate("/auth"); setIsMenuOpen(false); }} className="text-left py-3 px-4 rounded-xl text-gold-light font-bold flex items-center gap-2"><FaUser /> Account Login</button>
+              <button onClick={() => { navigate("/auth"); setIsMenuOpen(false); }} className="text-left py-3 px-4 rounded-xl text-gold-light font-bold flex items-center gap-2">
+                <FaUser /> Account Login
+              </button>
             ) : (
               <div className="space-y-1">
+                {/* Mobile Profile Header */}
+                <div className="flex items-center gap-3 px-4 py-3 mb-2 bg-light-bg dark:bg-dark-bg border border-light-section dark:border-dark-border rounded-xl">
+                  {user.image ? (
+                    <img src={user.image} alt="User" className="w-10 h-10 rounded-full object-cover border border-gold-light" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gold-light/20 flex items-center justify-center text-gold-light"><FaUser /></div>
+                  )}
+                  <div className="flex flex-col truncate">
+                    <span className="text-[10px] text-gold-light font-bold uppercase">Member</span>
+                    <span className="text-sm font-bold dark:text-white truncate">{user.name}</span>
+                  </div>
+                </div>
+
                 {user.role === 'admin' && (
                   <button onClick={() => { navigate("/admin"); setIsMenuOpen(false); }} className="w-full flex items-center gap-2 py-3 px-4 rounded-xl bg-gold-light text-black font-bold mb-2">
                     <FaUserShield /> Admin Dashboard

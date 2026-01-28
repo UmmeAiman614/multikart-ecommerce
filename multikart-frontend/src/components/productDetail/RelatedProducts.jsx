@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllProducts } from '../../api/api';
-import { toast } from 'react-hot-toast';
 
 const RelatedProducts = ({ currentCategoryId, currentProductId }) => {
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -11,16 +10,12 @@ const RelatedProducts = ({ currentCategoryId, currentProductId }) => {
     const fetchRelated = async () => {
       try {
         const res = await getAllProducts();
-        
-        // Filter logic:
-        // 1. Category match honi chahiye
-        // 2. Current product khud list mein nahi hona chahiye
+
         const filtered = res.data.filter(item => {
           const itemCatId = typeof item.category === 'object' ? item.category?._id : item.category;
           return itemCatId === currentCategoryId && item._id !== currentProductId;
         });
 
-        // Sirf top 4 products dikhane ke liye slice use karein
         setRelatedProducts(filtered.slice(0, 4));
       } catch (error) {
         console.error("Error fetching related products", error);
@@ -34,53 +29,70 @@ const RelatedProducts = ({ currentCategoryId, currentProductId }) => {
     }
   }, [currentCategoryId, currentProductId]);
 
-  if (loading) return null; // Ya chota sa loader
-  if (relatedProducts.length === 0) return null; // Agar koi related product na mile to section hide ho jaye
+  if (loading || relatedProducts.length === 0) return null;
 
   return (
-    <section className="bg-light-bg dark:bg-dark-bg py-16 px-4 md:px-10 border-t border-light-section dark:border-dark-border">
+    <section className="bg-[#FAF9F6] dark:bg-[#0a0a0a] py-20 px-4 md:px-10 border-t border-gray-100 dark:border-white/5">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-10">
-          <div>
-            <h2 className="text-2xl font-serif font-bold text-light-text dark:text-dark-text tracking-tight uppercase">You May Also Like</h2>
-            <div className="h-1 w-20 bg-gold-light mt-2"></div>
+
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-6 text-center md:text-left">
+          <div className="flex flex-col items-center md:items-start">
+            <span className="text-gold-light text-[10px] uppercase tracking-[0.5em] font-bold mb-2">Curated Selection</span>
+            <h2 className="text-4xl font-serif text-dark-bg dark:text-white">You May Also <span className="italic">Like</span></h2>
           </div>
-          <Link to="/products" className="text-xs font-bold uppercase tracking-widest text-gold-light border-b border-gold-light pb-1 hover:text-gold-hover hover:border-gold-hover transition-all">
-            View Collection
+          <Link to="/products" className="group flex items-center gap-4 text-xs font-bold uppercase tracking-widest text-dark-bg dark:text-gray-400 hover:text-gold-light transition-all">
+            Explore All <div className="w-10 h-[1px] bg-gold-light group-hover:w-16 transition-all"></div>
           </Link>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+
+        {/* Product Grid - Mobile par 2 columns kiye hain */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-10">
           {relatedProducts.map((item) => (
-            <Link 
-              to={`/product/${item._id}`} 
-              key={item._id} 
-              className="group cursor-pointer"
-              onClick={() => window.scrollTo(0, 0)} // Scroll to top when clicking related product
+            <Link
+              to={`/product/${item._id}`}
+              key={item._id}
+              className="group"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
-              <div className="relative overflow-hidden bg-white dark:bg-dark-card p-4 rounded-lg shadow-sm border border-light-section dark:border-dark-border">
+              {/* Image Container - Mobile par height thori kam ki hai */}
+              <div className="relative aspect-[3/4] sm:aspect-[4/5] overflow-hidden bg-white dark:bg-[#111] mb-3 md:mb-6 shadow-sm group-hover:shadow-2xl transition-all duration-500">
                 {item.isOnSale && (
-                   <span className="absolute top-4 left-4 z-10 bg-accent-rose text-white text-[9px] font-bold px-2 py-1 rounded uppercase">Sale</span>
+                  <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20 bg-black text-white text-[7px] md:text-[8px] font-black px-2 py-1 md:px-3 md:py-1.5 uppercase tracking-widest">
+                    Sale
+                  </div>
                 )}
-                <img 
-                  src={item.image || "https://via.placeholder.com/300"} 
+
+                <img
+                  src={item.images && item.images.length > 0 ? item.images[0] : "https://via.placeholder.com/400x500?text=No+Image"}
                   alt={item.name}
-                  className="w-full h-64 object-cover transform group-hover:scale-110 transition-transform duration-700" 
+                  className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transform group-hover:scale-110 transition-all duration-1000"
                 />
-                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                {/* Golden Overlay - Mobile par hamesha visible rakha hai ya touch friendly banaya hai */}
+                <div className="absolute inset-x-0 bottom-0 h-10 md:h-16 bg-gold-light/95 backdrop-blur-md flex items-center justify-center lg:translate-y-full lg:group-hover:translate-y-0 transition-all duration-500 border-t border-gold-dark/20">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <span className="text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.4em] font-black text-black">
+                      Details
+                    </span>
+                    <div className="w-3 md:w-5 h-[1px] bg-black hidden xs:block"></div>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 text-center">
-                <h3 className="text-sm font-medium text-light-text dark:text-dark-text group-hover:text-gold-light transition-colors duration-300 line-clamp-1">
+
+              {/* Info Section - Alignment thori behtar ki hai */}
+              <div className="space-y-1 px-1">
+                <h3 className="text-[11px] md:text-sm font-serif text-gray-800 dark:text-gray-200 group-hover:text-gold-light transition-colors duration-300 line-clamp-1">
                   {item.name}
                 </h3>
-                <div className="flex justify-center gap-2 items-center mt-1">
+                <div className="flex items-center gap-2">
                   {item.isOnSale ? (
                     <>
-                      <p className="text-gold-light font-bold font-serif text-lg">${item.salePrice}</p>
-                      <p className="text-xs text-light-muted line-through opacity-50">${item.price}</p>
+                      <span className="text-gold-light font-bold text-xs md:text-base">${item.salePrice}</span>
+                      <span className="text-[9px] text-gray-400 line-through">${item.price}</span>
                     </>
                   ) : (
-                    <p className="text-gold-light font-bold font-serif text-lg">${item.price}</p>
+                    <span className="text-gold-light font-bold text-xs md:text-base">${item.price}</span>
                   )}
                 </div>
               </div>

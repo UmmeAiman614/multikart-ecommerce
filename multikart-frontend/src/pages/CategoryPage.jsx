@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/api';
 import { Loader2, ArrowRight, Diamond } from 'lucide-react';
+import BreadCrumbs from '../components/shared/BreadCrumb';
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
@@ -27,8 +28,14 @@ const CategoriesPage = () => {
       <Loader2 className="animate-spin text-gold-light" size={40} />
     </div>
   );
+ const breadcrumbPaths = [
+    { name: "Home", href: "/" },
+    { name: "Categories" },
+  ];
 
   return (
+    <>
+      <BreadCrumbs paths={breadcrumbPaths} />
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg py-20 px-6 transition-colors duration-500">
       <div className="max-w-7xl mx-auto">
         
@@ -103,6 +110,7 @@ const CategoriesPage = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

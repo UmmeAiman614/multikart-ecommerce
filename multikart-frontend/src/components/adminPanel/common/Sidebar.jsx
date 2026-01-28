@@ -74,17 +74,17 @@ const Sidebar = ({ isOpen }) => {
   return (
     <aside className={`fixed inset-y-0 left-0 z-40 w-64 flex flex-col transform border-r border-light-section bg-light-card px-4 py-6 transition-transform dark:border-dark-border dark:bg-dark-card lg:static lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
-      {/* Brand Logo - Fixed Top */}
-      <div className="mb-10 flex items-center gap-3 px-4 flex-shrink-0">
-        <div className="bg-gold-light p-1.5 rounded-lg shadow-inner">
-          <Diamond className="text-white" size={24} />
+      {/* 🛠️ UPDATED BRAND LOGO: JewelLux Style */}
+      <div className="mb-10 flex items-center gap-3 px-2 flex-shrink-0 cursor-pointer" onClick={() => navigate("/admin")}>
+        <div className="w-10 h-10 bg-gradient-to-br from-gold-light to-gold-dark rounded-xl flex items-center justify-center shadow-lg transform hover:rotate-6 transition-transform">
+          <span className="text-white font-black text-xl italic">J</span>
         </div>
-        <h1 className="text-2xl font-bold tracking-tighter text-light-text dark:text-dark-text">
-          REMOS<span className="text-gold-light">.</span>
-        </h1>
+        <span className="text-xl font-serif font-bold tracking-tighter dark:text-white">
+          Jewel<span className="text-gold-light italic">Lux</span>
+        </span>
       </div>
 
-      {/* Navigation Links - Scrollable without visible scrollbar */}
+      {/* Navigation Links */}
       <nav className="flex flex-col gap-1 flex-grow overflow-y-auto no-scrollbar relative">
         <div className="flex flex-col gap-1 pb-10">
           <SidebarItem icon={LayoutDashboard} label="Dashboard" to="/admin" onClick={() => setActiveTab('dashboard')} />
@@ -101,7 +101,7 @@ const Sidebar = ({ isOpen }) => {
 
           <SidebarItem icon={ShoppingCart} label="Orders" onClick={() => toggleTab('orders')} isOpen={activeTab === 'orders'}>
             <SubLink to="/admin/orders/pending" label="Pending Orders" />
-            <SubLink to="/admin/orders/shipped" label="shiped Orders" /> 
+            <SubLink to="/admin/orders/shipped" label="Shipped Orders" /> 
             <SubLink to="/admin/orders/completed" label="Completed Orders" />
           </SidebarItem>
 
@@ -109,32 +109,15 @@ const Sidebar = ({ isOpen }) => {
             <SubLink to="/admin/users/add-user" label="Add User" />
             <SubLink to="/admin/users/list" label="User List" />
           </SidebarItem>
-          {/* NEW REVIEWS LINK ADDED HERE */}
-          <SidebarItem
-            icon={MessageSquare}
-            label="Reviews"
-            to="/admin/reviews"
-            onClick={() => setActiveTab('reviews')}
-          />
           
-          <SidebarItem
-            icon={Ticket}
-            label="Coupons"
-            to="/admin/coupons"
-            onClick={() => setActiveTab('coupons')}
-          />
-
+          <SidebarItem icon={MessageSquare} label="Reviews" to="/admin/reviews" onClick={() => setActiveTab('reviews')} />
+          <SidebarItem icon={Ticket} label="Coupons" to="/admin/coupons" onClick={() => setActiveTab('coupons')} />
           <SidebarItem icon={MessageSquare} label="Testimonials" to="/admin/testimonials" onClick={() => setActiveTab('testimonials')} />
         </div>
-
-        {/* Subtle Bottom Fade Mask */}
-        <div className="absolute bottom-0 left-0 w-full h-10 bg-gradient-to-t from-light-card dark:from-dark-card to-transparent pointer-events-none sticky"></div>
       </nav>
 
-      {/* BOTTOM SECTION: Back to Home & Profile */}
+      {/* BOTTOM SECTION */}
       <div className="mt-auto pt-6 border-t border-light-section dark:border-dark-border space-y-4 flex-shrink-0">
-
-        {/* Back to Home Button - Styled with JewelLux Theme */}
         <Link
           to="/"
           className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-gold-light/30 text-gold-light hover:bg-gold-light hover:text-white transition-all duration-300 group shadow-lg shadow-gold-light/5 hover:shadow-gold-light/20"
@@ -148,23 +131,18 @@ const Sidebar = ({ isOpen }) => {
 
         {/* User Profile Mini-Card */}
         <div className="p-3 rounded-2xl bg-light-section/50 dark:bg-dark-bg/50 border border-light-section dark:border-dark-border flex items-center gap-3 backdrop-blur-sm">
-
-          {/* Profile Image with Dynamic Sync */}
           <div className="h-10 w-10 rounded-full overflow-hidden shadow-md flex-shrink-0 border-2 border-gold-light/20 relative">
             {user?.image ? (
               <img
-                key={user?.image}
-                src={`${user.image}?t=${new Date().getTime()}`}
+                src={user.image}
                 alt="profile"
                 className="h-full w-full object-cover"
               />
             ) : (
-              /* Fallback if no image exists */
               <div className="h-full w-full bg-gradient-to-tr from-gold-dark to-gold-light flex items-center justify-center text-white font-bold text-lg">
                 {user?.name?.charAt(0) || 'A'}
               </div>
             )}
-            {/* Tiny Online Status Dot */}
             <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white dark:border-dark-bg"></span>
           </div>
 

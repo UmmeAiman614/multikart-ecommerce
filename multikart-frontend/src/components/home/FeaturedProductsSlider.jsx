@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
-import { FaHeart, FaShoppingCart, FaEye, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { useNavigate } from "react-router-dom"; // Navigation ke liye
+import { useState, useEffect } from "react";
+import { FaHeart, FaEye, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { getFeaturedProducts } from "../../api/api";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
@@ -10,114 +10,117 @@ import { toast } from "react-hot-toast";
 const FeaturedProductsSlider = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const autoSlideInterval = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemsPerView, setItemsPerView] = useState(3);
   
-  const navigate = useNavigate(); // Hook initialize kiya
+  // Touch States
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
-  // API se data lana
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) setItemsPerView(1);
+      else if (window.innerWidth < 1024) setItemsPerView(2);
+      else setItemsPerView(3);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
         setLoading(true);
         const res = await getFeaturedProducts();
         setProducts(res.data || []);
-      } catch (err) {
-        console.error("Featured fetch error:", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.error(err); } finally { setLoading(false); }
     };
     fetchFeatured();
   }, []);
 
-  // Chunks mein divide karna (3 items per slide for desktop)
-  const slides = [];
-  const itemsPerSlide = 3;
-  for (let i = 0; i < products.length; i += itemsPerSlide) {
-    slides.push(products.slice(i, i + itemsPerSlide));
-  }
-
-  useEffect(() => {
-    if (slides.length > 0) startAutoSlide();
-    return stopAutoSlide;
-  }, [slides.length]);
-
-  const startAutoSlide = () => {
-    stopAutoSlide();
-    autoSlideInterval.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 5000);
+  const nextSlide = () => {
+    if (currentIndex < products.length - itemsPerView) {
+      setCurrentIndex(currentIndex + 1);
+    } else { setCurrentIndex(0); }
   };
 
-  const stopAutoSlide = () => {
-    if (autoSlideInterval.current) clearInterval(autoSlideInterval.current);
+  const prevSlide = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    } else { setCurrentIndex(products.length - itemsPerView); }
   };
 
-  if (loading) return (
-    <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-gold-light" size={40} /></div>
-  );
+  // --- SWIPE LOGIC ---
+  const handleTouchStart = (e) => setTouchStart(e.targetTouches[0].clientX);
+  const handleTouchMove = (e) => setTouchEnd(e.targetTouches[0].clientX);
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 50) nextSlide(); // Swipe Left to go Next
+    if (distance < -50) prevSlide(); // Swipe Right to go Prev
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
-  if (products.length === 0) return null;
+  if (loading) return <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-gold-light" size={40} /></div>;
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-light-bg dark:bg-dark-bg transition-colors duration-500">
+    <section className="py-16 md:py-24 px-4 bg-light-bg dark:bg-dark-bg overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        
-        {/* Header */}
-        <div className="text-center mb-16 space-y-4">
+        {/* Header - Isko thoda aur clean kiya */}
+        <div className="text-center mb-16 space-y-2">
           <div className="flex justify-center items-center gap-2 text-gold-light">
-            <Diamond size={18} fill="currentColor" />
-            <span className="text-xs font-black uppercase tracking-[0.5em]">Selected by Experts</span>
+            <Diamond size={14} fill="currentColor" />
+            <span className="text-[10px] font-black uppercase tracking-[0.5em]">Curated Selection</span>
           </div>
-          <h2 className="text-5xl md:text-7xl font-serif italic font-bold text-light-text dark:text-dark-text tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-serif italic font-medium dark:text-white">
             Featured <span className="text-gold-light">Gems</span>
           </h2>
         </div>
 
-        <div className="relative group">
-          {/* Controls */}
-          <button onClick={() => { stopAutoSlide(); setCurrentSlide(prev => prev === 0 ? slides.length - 1 : prev - 1); startAutoSlide(); }}
-            className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-white dark:bg-dark-card shadow-2xl flex items-center justify-center text-gold-light opacity-0 group-hover:opacity-100 transition-all duration-500 border border-gold-light/20 hover:bg-gold-light hover:text-white"
-          >
-            <FaChevronLeft size={20} />
+        <div className="relative">
+          {/* Navigation Buttons - Inhein thoda aur stylish kiya */}
+          <button onClick={prevSlide} className="absolute -left-5 lg:-left-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/80 dark:bg-dark-card/80 backdrop-blur shadow-lg hidden md:flex items-center justify-center text-gold-light border border-gold-light/20 hover:bg-gold-light hover:text-white transition-all duration-300">
+            <FaChevronLeft size={14}/>
+          </button>
+          <button onClick={nextSlide} className="absolute -right-5 lg:-right-12 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-white/80 dark:bg-dark-card/80 backdrop-blur shadow-lg hidden md:flex items-center justify-center text-gold-light border border-gold-light/20 hover:bg-gold-light hover:text-white transition-all duration-300">
+            <FaChevronRight size={14}/>
           </button>
 
-          <button onClick={() => { stopAutoSlide(); setCurrentSlide(prev => prev === slides.length - 1 ? 0 : prev + 1); startAutoSlide(); }}
-            className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-white dark:bg-dark-card shadow-2xl flex items-center justify-center text-gold-light opacity-0 group-hover:opacity-100 transition-all duration-500 border border-gold-light/20 hover:bg-gold-light hover:text-white"
+          <div 
+            className="overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            <FaChevronRight size={20} />
-          </button>
-
-          {/* Slider Content */}
-          <div className="overflow-hidden px-4">
-            <div className="flex transition-transform duration-1000 cubic-bezier(0.4, 0, 0.2, 1)" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-              {slides.map((slide, idx) => (
-                <div key={idx} className="w-full flex-shrink-0 grid grid-cols-1 md:grid-cols-3 gap-10">
-                  {slide.map((product) => (
+            <div 
+              className="flex transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]" 
+              style={{ transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)` }}
+            >
+              {products.map((product) => (
+                <div 
+                  key={product._id} 
+                  className="flex-shrink-0 px-3 md:px-6" 
+                  /* Desktop par width control karne ke liye max-width add ki */
+                  style={{ width: `${100 / itemsPerView}%` }}
+                >
+                  <div className="max-w-[380px] mx-auto"> {/* Card ki width limit set ki */}
                     <ProductCard 
-                      key={product._id} 
                       product={product} 
                       addToCart={addToCart} 
                       toggleWishlist={toggleWishlist} 
                       isWishlisted={isInWishlist(product._id)}
-                      onView={() => navigate(`/product/${product._id}`)} // Navigation pass ki
+                      onView={() => navigate(`/product/${product._id}`)}
                     />
-                  ))}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Indicators */}
-          <div className="flex justify-center mt-12 gap-3">
-            {slides.map((_, index) => (
-              <button key={index} onClick={() => { stopAutoSlide(); setCurrentSlide(index); startAutoSlide(); }}
-                className={`transition-all duration-500 rounded-full ${currentSlide === index ? "w-10 h-2 bg-gold-light" : "w-2 h-2 bg-gold-light/30"}`}
-              />
-            ))}
           </div>
         </div>
       </div>
@@ -127,65 +130,82 @@ const FeaturedProductsSlider = () => {
 
 const ProductCard = ({ product, addToCart, toggleWishlist, isWishlisted, onView }) => {
   return (
-    <div className="group relative bg-light-card dark:bg-[#1A1A1A] rounded-[3rem] overflow-hidden border border-light-section dark:border-white/5 shadow-xl transition-all duration-500 hover:shadow-gold-light/10">
+    <div className="group bg-white dark:bg-[#111] rounded-[1.5rem] overflow-hidden border border-gray-100 dark:border-white/5 shadow-sm hover:shadow-xl transition-all duration-500">
       
-      <div className="relative h-[400px] overflow-hidden">
-        {/* Image Clickable */}
+      {/* Aspect Ratio 1:1 (Square) kar di taaki image bahut lambi na lage */}
+      <div className="relative aspect-square overflow-hidden bg-gray-50 dark:bg-neutral-900">
         <img 
           src={product.images?.[0] || "/placeholder.jpg"} 
           alt={product.name} 
-          className="w-full h-full object-cover cursor-pointer transition-transform duration-[1.5s] group-hover:scale-110" 
+          className="w-full h-full object-cover cursor-pointer transition-transform duration-1000 group-hover:scale-105" 
           onClick={onView}
         />
         
-        {/* Overlay Actions */}
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center gap-4">
-           <div className="flex gap-4 transform translate-y-10 group-hover:translate-y-0 transition-transform duration-500">
-             <button onClick={() => toggleWishlist(product)} className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all ${isWishlisted ? 'bg-red-500 text-white' : 'bg-white text-gold-light hover:bg-gold-light hover:text-white'}`}>
-                <FaHeart size={20} />
-             </button>
-             
-             {/* Eye Icon Clickable */}
+        <div className="absolute inset-0 bg-black/30 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center gap-4">
+           <div className="flex gap-3">
              <button 
-                onClick={onView}
-                className="w-14 h-14 bg-white text-gold-light rounded-full flex items-center justify-center shadow-2xl hover:bg-gold-light hover:text-white transition-all"
+                onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }} 
+                className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${isWishlisted ? 'bg-red-500 text-white' : 'bg-white/90 text-gold-light hover:bg-gold-light hover:text-white'}`}
              >
-                <FaEye size={20} />
+                <FaHeart size={16} />
+             </button>
+             <button 
+                onClick={(e) => { e.stopPropagation(); onView(); }} 
+                className="w-11 h-11 bg-white/90 text-gold-light rounded-full flex items-center justify-center backdrop-blur-md hover:bg-gold-light hover:text-white transition-all"
+             >
+                <FaEye size={16} />
              </button>
            </div>
            
-           <button onClick={() => { addToCart(product); toast.success("Added to cart!"); }} 
-             className="bg-gold-light hover:bg-gold-hover text-white px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest transform translate-y-10 group-hover:translate-y-0 transition-all duration-500 delay-75 shadow-2xl"
+           <button 
+             onClick={(e) => { e.stopPropagation(); addToCart(product); toast.success("Added to bag!"); }} 
+             className="bg-gold-light text-white px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white hover:text-gold-light transition-colors duration-300"
            >
              Add to Bag
            </button>
         </div>
 
+        {/* Mobile View Buttons (Bottom bar style) */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 flex justify-between items-center md:hidden bg-gradient-to-t from-black/60 to-transparent">
+             <button 
+                onClick={(e) => { e.stopPropagation(); toggleWishlist(product); }} 
+                className={`${isWishlisted ? 'text-red-500' : 'text-white'}`}
+             >
+                <FaHeart size={18} />
+             </button>
+             <button 
+               onClick={(e) => { e.stopPropagation(); addToCart(product); }}
+               className="bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase"
+             >
+               + Add
+             </button>
+        </div>
+
         {product.isOnSale && (
-          <span className="absolute top-6 left-6 bg-red-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-tighter">Sale</span>
+          <span className="absolute top-4 left-4 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg">
+            SALE
+          </span>
         )}
       </div>
 
-      <div className="p-10 text-center">
-        <span className="text-gold-light text-[10px] font-black uppercase tracking-[0.4em] mb-2 block">
-          {product.category?.catName || "Luxury Item"}
-        </span>
-        {/* Product Name Clickable */}
-        <h3 
-          className="text-2xl font-serif italic font-bold text-light-text dark:text-dark-text mb-3 truncate cursor-pointer hover:text-gold-light transition-colors"
-          onClick={onView}
-        >
+      <div className="p-6 text-center">
+        <h3 className="text-sm md:text-lg font-medium dark:text-gray-200 truncate cursor-pointer hover:text-gold-light transition-colors" onClick={onView}>
           {product.name}
         </h3>
-        <div className="flex justify-center items-center gap-3">
-          <p className="text-2xl font-bold text-light-text dark:text-dark-text">
+        <div className="mt-2 flex justify-center items-center gap-3">
+          <p className="text-base md:text-lg font-bold text-gold-light">
             ${product.isOnSale ? product.salePrice : product.price}
           </p>
-          {product.isOnSale && <p className="text-sm line-through opacity-40 dark:text-dark-text">${product.price}</p>}
+          {product.isOnSale && (
+            <p className="text-xs line-through text-gray-400">
+              ${product.price}
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 };
+
 
 export default FeaturedProductsSlider;
