@@ -55,7 +55,7 @@ const AboutIntro = () => {
                 onClick={() => navigate('/products')} // 3. Click handle kiya
                 className="px-10 py-4 bg-transparent border border-gold-light text-gold-light rounded-full text-xs font-black uppercase tracking-widest hover:bg-gold-light hover:text-white transition-all duration-500 shadow-lg hover:shadow-gold-light/20"
              >
-                Explore Collections
+                Explore our Collections
              </button>
           </div>
         </div>
