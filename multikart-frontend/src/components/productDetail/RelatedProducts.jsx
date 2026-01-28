@@ -79,8 +79,7 @@ const RelatedProducts = ({ currentCategoryId, currentProductId }) => {
                   </div>
                 </div>
               </div>
-
-              {/* Info Section - Alignment thori behtar ki hai */}
+              
               <div className="space-y-1 px-1">
                 <h3 className="text-[11px] md:text-sm font-serif text-gray-800 dark:text-gray-200 group-hover:text-gold-light transition-colors duration-300 line-clamp-1">
                   {item.name}
