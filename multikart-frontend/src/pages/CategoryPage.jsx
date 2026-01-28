@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/api';
 import { Loader2, ArrowRight, Diamond } from 'lucide-react';
-import BreadCrumbs from '../components/shared/BreadCrumb';
+import BreadCrumbs from '../components/shared/Breadcrumb';
 
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
